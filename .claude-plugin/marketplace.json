@@ -1,0 +1,16 @@
+{
+  "name": "nuvraxis-plugins",
+  "owner": {
+    "name": "Nuvraxis",
+    "email": "hello@nuvraxis.com"
+  },
+  "description": "Nuvraxis Claude Code plugins: production conventions for TypeScript, Next.js, nuvui and the Docker → GHCR → Helm → ArgoCD delivery path.",
+  "plugins": [
+    {
+      "name": "nuvraxis-frontend",
+      "source": "./plugins/nuvraxis-frontend",
+      "description": "Skills, templates and the nuvui MCP for Next.js apps in a pnpm + Turborepo monorepo, shipped as Docker images and Helm charts.",
+      "category": "development"
+    }
+  ]
+}

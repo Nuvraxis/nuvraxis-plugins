@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "nuvui": {
+      "type": "http",
+      "url": "https://nuvui.nuvraxis.com/mcp"
+    }
+  }
+}
