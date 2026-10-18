@@ -1,0 +1,29 @@
+@use "abstracts" as a;
+
+.page {
+  display: grid;
+  gap: a.space(4);
+  margin-inline: auto;
+  padding: a.space(4);
+  max-inline-size: var(--app-content-max-width);
+
+  @include a.breakpoint("md") {
+    padding: a.space(8);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__meta {
+    margin: 0;
+    color: var(--color-muted-foreground);
+    font-size: var(--text-sm);
+  }
+
+  &__card {
+    max-inline-size: 32rem;
+  }
+}

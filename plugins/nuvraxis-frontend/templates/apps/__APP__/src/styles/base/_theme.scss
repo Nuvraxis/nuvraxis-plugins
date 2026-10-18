@@ -1,0 +1,12 @@
+@use "abstracts" as a;
+
+// Re-theme by setting nuvui's own token names. New tokens nuvui doesn't have get an --app- prefix.
+:root {
+  --app-content-max-width: 72rem;
+}
+
+// Dark values for any semantic color changed above go here: a value set on :root alone
+// replaces both the light and the dark one.
+@include a.dark {
+  color-scheme: dark;
+}

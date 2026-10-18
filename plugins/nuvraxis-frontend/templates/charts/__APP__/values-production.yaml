@@ -1,0 +1,40 @@
+# Production overrides. Pass after values.yaml: -f values.yaml -f values-production.yaml
+# (in Argo CD: helm.valueFiles: [values.yaml, values-production.yaml]).
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 384Mi
+  limits:
+    memory: 768Mi
+
+imagePullSecrets:
+  - name: ghcr-pull
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  hosts:
+    - host: __APP__.nuvraxis.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: __APP__-tls
+      hosts:
+        - __APP__.nuvraxis.com
+
+config:
+  OTEL_SERVICE_NAME: __APP__
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production
+
+existingSecret: __APP__-secrets

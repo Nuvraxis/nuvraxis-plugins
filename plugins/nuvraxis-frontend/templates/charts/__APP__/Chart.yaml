@@ -1,0 +1,11 @@
+apiVersion: v2
+name: __APP__
+description: Helm chart for the __APP__ Next.js app (ghcr.io/nuvraxis/__APP__).
+type: application
+# Both are set by .github/workflows/release.yaml from the git tag (vX.Y.Z → version X.Y.Z,
+# appVersion vX.Y.Z) when the chart is packaged. Don't edit them by hand.
+version: 0.0.0
+appVersion: "0.0.0"
+home: https://github.com/nuvraxis/__APP__
+sources:
+  - https://github.com/nuvraxis/__APP__

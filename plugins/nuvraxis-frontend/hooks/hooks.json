@@ -1,0 +1,17 @@
+{
+  "description": "Formats and fixes edited files with Biome when the project has a biome.json. No-op everywhere else.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/biome-format.mjs\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
