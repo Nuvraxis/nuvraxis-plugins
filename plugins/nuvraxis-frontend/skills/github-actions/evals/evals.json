@@ -1,0 +1,48 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; workflows still have to pass actionlint.",
+  "evals": [
+    {
+      "id": "add-e2e-to-pr",
+      "prompt": "Add our Playwright end-to-end tests to the PR checks.",
+      "project": ["next", "turbo", "@playwright/test"],
+      "expect": [
+        { "pattern": "pr\\.yaml", "why": "PR checks live in pr.yaml." },
+        { "pattern": "pnpm/action-setup@v6[\\s\\S]*actions/setup-node@v7", "why": "pnpm is set up before setup-node." },
+        { "pattern": "pnpm install --frozen-lockfile", "why": "Installs from the lockfile." },
+        { "pattern": "timeout-minutes:", "why": "Every job has a timeout." },
+        { "pattern": "draft", "why": "Draft PRs are skipped like the other jobs." }
+      ],
+      "reject": [
+        { "pattern": "npx playwright|npm (ci|install)", "why": "pnpm only: pnpm exec playwright." },
+        { "pattern": "permissions:\\s*write-all|contents:\\s*write", "why": "A test job needs read-only permissions." },
+        { "pattern": "branches:\\s*\\[\\s*main\\s*\\]", "why": "pr.yaml has no branches filter." }
+      ]
+    },
+    {
+      "id": "release-image-missing",
+      "prompt": "The release workflow failed with 'sha-3f2a1bc doesn't exist'. Make it build the image when that happens.",
+      "project": ["helm"],
+      "expect": [
+        { "pattern": "main\\.yaml", "why": "The answer is to let main.yaml finish for that commit and re-run the release." },
+        { "pattern": "re-?run", "why": "The release job is re-run once the image exists." }
+      ],
+      "reject": [
+        { "pattern": "build-push-action[\\s\\S]*release", "why": "release.yaml never rebuilds: the released image must be the one main tested." },
+        { "pattern": "push:\\s*true[\\s\\S]*tags:[^\\n]*v\\*", "why": "No fallback build in the release workflow." }
+      ]
+    },
+    {
+      "id": "publish-latest-from-main",
+      "prompt": "Make main.yaml also push the :latest tag so staging always gets the newest build.",
+      "project": ["docker"],
+      "expect": [
+        { "pattern": ":main|value=main", "why": "The moving tag for main builds is :main." },
+        { "pattern": "latest=false|release", "why": "latest is reserved for releases." }
+      ],
+      "reject": [
+        { "pattern": "latest=true|type=raw,value=latest", "why": "main.yaml never pushes latest." },
+        { "pattern": "secrets\\.(GHCR|DOCKER)_(TOKEN|PAT)", "why": "GITHUB_TOKEN only." }
+      ]
+    }
+  ]
+}

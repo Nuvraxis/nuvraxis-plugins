@@ -1,0 +1,117 @@
+# CI for this plugin repository only. Generated apps get their own workflows from templates/.
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # `claude plugin validate` needs no login; run it through pnpm dlx at a pinned version.
+  CLAUDE_CODE_VERSION: 2.1.296
+  HELM_VERSION: v4.3.1
+  KUBECONFORM_IMAGE: ghcr.io/yannh/kubeconform:v0.8.0
+  KUBERNETES_VERSION: 1.34.0
+  NEXT_TELEMETRY_DISABLED: "1"
+  TURBO_TELEMETRY_DISABLED: "1"
+
+jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.12.0
+      - name: claude plugin validate --strict (plugin and marketplace)
+        run: |
+          pnpm dlx "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" plugin validate ./plugins/nuvraxis-frontend --strict
+          pnpm dlx "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" plugin validate . --strict
+      - name: Vendored skills match UPSTREAM.json
+        run: node scripts/sync-upstream.mjs --check
+      - name: Own skills meet the standard; embedded templates match
+        run: node scripts/check-skills.mjs
+
+  # Scaffolds a throwaway app from templates/ exactly as the scaffold skill does, then runs
+  # every check a generated repo runs, so a broken template fails here, not in someone's app.
+  templates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP: ci-demo
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # Same pnpm version as the templates: both package.json files pin pnpm@12.14.0.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: plugins/nuvraxis-frontend/templates/.node-version
+      - name: Scaffold
+        run: |
+          echo "DEMO=${RUNNER_TEMP}/ci-demo" >> "$GITHUB_ENV"
+          node plugins/nuvraxis-frontend/skills/scaffold-frontend-app/scripts/copy-templates.mjs "${APP}" "${RUNNER_TEMP}/ci-demo"
+          git -C "${RUNNER_TEMP}/ci-demo" init --quiet
+      - name: Install, typecheck, lint, build
+        working-directory: ${{ env.DEMO }}
+        run: |
+          # A fresh scaffold has no lockfile yet; the app's first install writes it.
+          pnpm install --no-frozen-lockfile
+          pnpm typecheck
+          pnpm lint
+          pnpm build
+      - name: actionlint on the generated workflows
+        working-directory: ${{ env.DEMO }}
+        run: docker run --rm -v "${PWD}:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: helm lint + kubeconform
+        working-directory: ${{ env.DEMO }}
+        run: |
+          helm lint --strict "charts/${APP}"
+          helm lint --strict "charts/${APP}" -f "charts/${APP}/values-production.yaml"
+          {
+            helm template "${APP}" "charts/${APP}"
+            echo "---"
+            helm template "${APP}" "charts/${APP}" -f "charts/${APP}/values-production.yaml"
+          } | docker run --rm -i "${KUBECONFORM_IMAGE}" -strict -summary -kubernetes-version "${KUBERNETES_VERSION}" -
+      - uses: docker/setup-buildx-action@v4
+      - name: docker build
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ env.DEMO }}
+          file: ${{ env.DEMO }}/apps/${{ env.APP }}/Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ env.APP }}:ci
+          build-args: |
+            NEXT_DEPLOYMENT_ID=${{ github.sha }}
+      - name: Run the image read-only and hit /api/health
+        run: |
+          docker run -d --name app -p 3000:3000 \
+            --read-only --tmpfs "/app/apps/${APP}/.next/cache:uid=1001,gid=1001" \
+            --cap-drop ALL --security-opt no-new-privileges \
+            "${APP}:ci"
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health; then
+              curl -fsSI http://127.0.0.1:3000/ | grep -i '^content-security-policy:.*nonce-'
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs app
+          exit 1

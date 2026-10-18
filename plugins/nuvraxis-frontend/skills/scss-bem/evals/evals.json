@@ -1,0 +1,56 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm lint` (Biome + stylelint) and `pnpm build`.",
+  "evals": [
+    {
+      "id": "invoice-card-styles",
+      "prompt": "Style the InvoiceCard component: a bordered card with the invoice number, the total on the right on wider screens, and a red border when it's overdue.",
+      "project": ["next", "@nuvui/react", "sass", "stylelint-config-standard-scss"],
+      "expect": [
+        { "pattern": "import \"\\./invoice-card\\.scss\"", "why": "One global block file beside the component, imported by it." },
+        { "pattern": "\\.invoice-card\\s*\\{", "why": "The block class is named after the component in kebab-case." },
+        { "pattern": "&__total", "why": "Elements are nested one level with &__." },
+        { "pattern": "&--overdue", "why": "The overdue state is a modifier on the block." },
+        { "pattern": "var\\(--color-danger\\)", "why": "The red comes from the semantic danger token." },
+        { "pattern": "breakpoint\\(\"(sm|md)\"\\)", "why": "The wider-screen layout uses nuvui's breakpoint mixin, smallest screen first." },
+        { "pattern": "invoice-card invoice-card--overdue", "why": "The modifier is added next to the base class, not instead of it." }
+      ],
+      "reject": [
+        { "pattern": "\\.module\\.scss", "why": "The convention is global BEM files, not CSS Modules." },
+        { "pattern": "#[0-9a-fA-F]{3,8}\\b", "why": "A color written out instead of a token." },
+        { "pattern": "!important", "why": "Never needed: app CSS is unlayered and beats nuvui's layers." },
+        { "pattern": "@import ", "why": "@use, never @import." },
+        { "pattern": "max-width:", "why": "Smallest screen first; no max-width queries." },
+        { "pattern": "__[a-z-]+__", "why": "An element inside an element." }
+      ]
+    },
+    {
+      "id": "rounded-toolbar-buttons",
+      "prompt": "Make the buttons in our page toolbar fully rounded, but only in the toolbar.",
+      "project": ["next", "@nuvui/react", "sass"],
+      "expect": [
+        { "pattern": "--nuv-button-radius", "why": "A nuvui component's look changes through its --nuv-* variable." },
+        { "pattern": "var\\(--radius-full\\)", "why": "The value is a radius token." }
+      ],
+      "reject": [
+        { "pattern": "\\.nuv-button", "why": "Never target a nuv- class with a selector." },
+        { "pattern": "!important", "why": "Variables make heavier selectors unnecessary." },
+        { "pattern": "9999px", "why": "A raw value where a token exists." }
+      ]
+    },
+    {
+      "id": "brand-theme-dark",
+      "prompt": "Change the app's primary color to our green brand color and make sure dark mode still looks right.",
+      "project": ["next", "@nuvui/react", "sass"],
+      "expect": [
+        { "pattern": "--color-primary:", "why": "Re-theme by setting nuvui's own token name." },
+        { "pattern": "@include [a-z]+\\.dark", "why": "Dark values go through nuvui's dark mixin, which follows data-theme." },
+        { "pattern": "_theme\\.scss|base/theme", "why": "Token overrides live in one theme file under styles/base." }
+      ],
+      "reject": [
+        { "pattern": "prefers-color-scheme", "why": "data-theme handles system dark mode; don't write the media query by hand." },
+        { "pattern": "@layer [a-z]", "why": "Token overrides stay unlayered so they win over nuvui's tokens layer." },
+        { "pattern": "ThemeProvider|createContext", "why": "nuvui has no theme provider; dark mode is an attribute." }
+      ]
+    }
+  ]
+}

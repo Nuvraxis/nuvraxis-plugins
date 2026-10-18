@@ -1,0 +1,53 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm typecheck` and `pnpm lint`.",
+  "evals": [
+    {
+      "id": "order-status-model",
+      "prompt": "Model an order that can be draft, submitted, shipped with a tracking number, or cancelled with a reason, and write a function that returns a label for each.",
+      "project": ["typescript"],
+      "expect": [
+        { "pattern": "status:\\s*\"(draft|submitted|shipped|cancelled)\"", "why": "A discriminated union with a literal tag." },
+        { "pattern": "trackingNumber", "why": "Data that only exists in one state lives in that variant." },
+        { "pattern": "assertNever|satisfies never|: never", "why": "The switch is exhaustive." }
+      ],
+      "reject": [
+        { "pattern": "\\benum\\s+[A-Z]", "why": "No enums." },
+        { "pattern": "is(Shipped|Cancelled|Draft)\\??:\\s*boolean", "why": "Boolean flags instead of a union." },
+        { "pattern": ":\\s*any\\b", "why": "No any." }
+      ]
+    },
+    {
+      "id": "webhook-body",
+      "prompt": "Parse the JSON body of the payment provider's webhook: it has an event type (paid or refunded), an invoice id and an amount in cents.",
+      "project": ["typescript", "valibot", "next"],
+      "expect": [
+        { "pattern": "v\\.object\\(", "why": "The body is parsed with a valibot schema." },
+        { "pattern": "v\\.picklist\\(\\[\"paid\", \"refunded\"\\]\\)|v\\.(literal|union)", "why": "The event type is a closed set." },
+        { "pattern": "v\\.brand\\(\"InvoiceId\"\\)|InvoiceId", "why": "The id is branded at the edge." },
+        { "pattern": "v\\.(integer|safeInteger)\\(\\)", "why": "Cents are integers." },
+        { "pattern": "InferOutput<", "why": "The type is derived from the schema, not written twice." }
+      ],
+      "reject": [
+        { "pattern": "as (Webhook|Payment)[A-Za-z]*\\b", "why": "Casting unparsed JSON instead of parsing it." },
+        { "pattern": "from \"zod\"", "why": "The repo standard is valibot." },
+        { "pattern": ":\\s*any\\b", "why": "No any." }
+      ]
+    },
+    {
+      "id": "shared-types-package",
+      "prompt": "Create a packages/types workspace package with our Invoice and Customer types and use it from the web app.",
+      "project": ["typescript", "next", "turbo"],
+      "expect": [
+        { "pattern": "\"exports\":\\s*\\{\\s*\"\\.\":\\s*\"\\./src/index\\.ts\"", "why": "A source-only internal package exports its TypeScript through exports." },
+        { "pattern": "\"extends\":\\s*\"@repo/tsconfig/base\\.json\"", "why": "The package extends the shared strict config." },
+        { "pattern": "\"@repo/types\":\\s*\"workspace:\\*\"", "why": "The app depends on it with the workspace protocol." },
+        { "pattern": "import type \\{", "why": "Types are imported with import type." }
+      ],
+      "reject": [
+        { "pattern": "\"strict\":\\s*false|\"noUncheckedIndexedAccess\":\\s*false", "why": "Strict flags are never loosened per package." },
+        { "pattern": "\"baseUrl\"", "why": "baseUrl is removed in TypeScript 7." },
+        { "pattern": "\"main\":\\s*\"dist/", "why": "No build step for a source-only internal package." }
+      ]
+    }
+  ]
+}

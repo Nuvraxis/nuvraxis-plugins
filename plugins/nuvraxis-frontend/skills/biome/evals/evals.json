@@ -1,0 +1,50 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm lint` and `pnpm exec biome ci .`.",
+  "evals": [
+    {
+      "id": "replace-eslint-prettier",
+      "prompt": "We have ESLint and Prettier in this Next.js repo. Switch us to Biome.",
+      "project": ["next", "eslint", "prettier", "eslint-config-next"],
+      "expect": [
+        { "pattern": "biomejs\\.dev/schemas/2\\.5\\.\\d+/schema\\.json", "why": "The schema is pinned to the installed Biome version." },
+        { "pattern": "\"preset\":\\s*\"recommended\"", "why": "The current way to enable the recommended rules." },
+        { "pattern": "\"next\":\\s*\"recommended\"", "why": "The next domain replaces eslint-config-next." },
+        { "pattern": "biome migrate (eslint|prettier)", "why": "Existing settings are migrated, not guessed." },
+        { "pattern": "pnpm remove", "why": "The old tools are removed." }
+      ],
+      "reject": [
+        { "pattern": "\"recommended\":\\s*true", "why": "Deprecated spelling." },
+        { "pattern": "npx |npm (i|install) ", "why": "pnpm only." },
+        { "pattern": "eslint-config-biome|prettier-plugin", "why": "Biome replaces them; nothing bridges the two." }
+      ]
+    },
+    {
+      "id": "package-specific-rule",
+      "prompt": "The packages/legacy-charts package uses non-null assertions everywhere. Make Biome stop complaining there but nowhere else.",
+      "project": ["@biomejs/biome", "turbo"],
+      "expect": [
+        { "pattern": "\"extends\":\\s*\"//\"", "why": "A nested config extends the root with //." },
+        { "pattern": "noNonNullAssertion\"?:\\s*\"off\"", "why": "Only that rule is turned off, only there." }
+      ],
+      "reject": [
+        { "pattern": "\"root\":\\s*true[\\s\\S]*legacy-charts", "why": "A nested config must not be a second root." },
+        { "pattern": "biome-ignore-all|\"linter\":\\s*\\{\\s*\"enabled\":\\s*false", "why": "Don't switch the linter off for the package." }
+      ]
+    },
+    {
+      "id": "ci-lint-step",
+      "prompt": "Add a lint check to our GitHub Actions PR workflow.",
+      "project": ["@biomejs/biome", "stylelint"],
+      "expect": [
+        { "pattern": "biome ci", "why": "CI uses biome ci, which never writes." },
+        { "pattern": "--reporter=github", "why": "Errors are annotated on the PR." },
+        { "pattern": "stylelint", "why": "SCSS is linted by stylelint, which Biome doesn't cover." },
+        { "pattern": "pnpm install --frozen-lockfile", "why": "CI installs from the lockfile." }
+      ],
+      "reject": [
+        { "pattern": "biome check --write", "why": "CI must not rewrite files." },
+        { "pattern": "npx ", "why": "pnpm only." }
+      ]
+    }
+  ]
+}

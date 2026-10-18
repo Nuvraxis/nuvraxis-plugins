@@ -1,0 +1,55 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm typecheck`, `pnpm lint` and `pnpm build`.",
+  "evals": [
+    {
+      "id": "cached-invoice-page",
+      "prompt": "Add an /invoices/[id] page that shows one invoice from the database, cached, and refreshed when someone marks it paid.",
+      "project": ["next", "react", "@nuvui/react", "valibot"],
+      "expect": [
+        { "pattern": "\"use cache\"", "why": "Cross-request caching is opt-in with the directive." },
+        { "pattern": "cacheTag\\(", "why": "The cached read is tagged so the write can expire it." },
+        { "pattern": "cacheLife\\(", "why": "The lifetime is stated, not left to the default." },
+        { "pattern": "updateTag\\(", "why": "A Server Action expires the tag with read-your-writes." },
+        { "pattern": "\"use server\"", "why": "Mark-as-paid is a Server Action." },
+        { "pattern": "PageProps<\"/invoices/\\[id\\]\">|await (props\\.)?params", "why": "params is async and typed from the generated route types." },
+        { "pattern": "notFound\\(\\)", "why": "A missing invoice is a 404, not an empty render." }
+      ],
+      "reject": [
+        { "pattern": "export const (dynamic|revalidate|fetchCache)", "why": "Old segment config errors under Cache Components." },
+        { "pattern": "useEffect\\([^)]*fetch", "why": "Data is fetched on the server, not in an effect." },
+        { "pattern": "revalidateTag\\([^,)]+\\)", "why": "One-argument revalidateTag is deprecated; use updateTag in actions." },
+        { "pattern": "unstable_cache", "why": "Replaced by \"use cache\"." }
+      ]
+    },
+    {
+      "id": "runtime-api-url",
+      "prompt": "The API base URL is different in staging and production. Make the dashboard call the right one; right now it's hardcoded.",
+      "project": ["next", "react", "valibot"],
+      "expect": [
+        { "pattern": "process\\.env\\.API_BASE_URL|env\\.API_BASE_URL", "why": "Per-environment config is a runtime server env var." },
+        { "pattern": "server-only", "why": "The env module is guarded against client imports." },
+        { "pattern": "src/env\\.ts|from \"@/env\"", "why": "Env is parsed once in src/env.ts." }
+      ],
+      "reject": [
+        { "pattern": "NEXT_PUBLIC_API_BASE_URL", "why": "NEXT_PUBLIC_ is baked at build; the same image runs in both environments." },
+        { "pattern": "env:\\s*\\{", "why": "next.config env is inlined into client bundles." }
+      ]
+    },
+    {
+      "id": "health-and-tracing",
+      "prompt": "We're deploying to Kubernetes. Add a health endpoint for the probes and send traces to our OpenTelemetry collector.",
+      "project": ["next", "react", "@vercel/otel"],
+      "expect": [
+        { "pattern": "app/api/health/route\\.ts", "why": "The health route lives at /api/health." },
+        { "pattern": "connection\\(\\)", "why": "The health route is dynamic, not prerendered." },
+        { "pattern": "registerOTel\\(", "why": "Tracing is registered in instrumentation.ts." },
+        { "pattern": "onRequestError", "why": "Unhandled errors are reported from one hook." },
+        { "pattern": "OTEL_EXPORTER_OTLP_ENDPOINT", "why": "The collector address is runtime config, not code." }
+      ],
+      "reject": [
+        { "pattern": "health[\\s\\S]{0,400}(prisma|db\\.|fetch\\()", "why": "The probe must not depend on the database or other services." },
+        { "pattern": "experimental:\\s*\\{[^}]*instrumentationHook", "why": "No flag is needed for instrumentation in Next 16." }
+      ]
+    }
+  ]
+}

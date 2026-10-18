@@ -1,0 +1,55 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the image still has to build, start read-only, and answer /api/health.",
+  "evals": [
+    {
+      "id": "containerise-app",
+      "prompt": "Write a Dockerfile for apps/portal so we can deploy it to Kubernetes.",
+      "project": ["next", "turbo", "@nuvui/react"],
+      "expect": [
+        { "pattern": "turbo@[^ ]*\\)?\"? prune portal --docker|turbo prune portal --docker", "why": "The repo is pruned to the app first." },
+        { "pattern": "pnpm fetch", "why": "Dependencies are fetched from the lockfile in their own layer." },
+        { "pattern": "--frozen-lockfile --offline", "why": "Install is reproducible and offline after fetch." },
+        { "pattern": "node:26\\.\\d+\\.\\d+-alpine[0-9.]+@sha256:", "why": "Exact Node version pinned by digest." },
+        { "pattern": "sha256sum -c", "why": "The pnpm binary is checksum-verified." },
+        { "pattern": "\\.next/standalone", "why": "The runner copies the standalone output." },
+        { "pattern": "\\.next/static", "why": "Static assets are copied next to the server." },
+        { "pattern": "USER 1001", "why": "Runs as a numeric non-root user." },
+        { "pattern": "HOSTNAME=0\\.0\\.0\\.0", "why": "The standalone server must bind to all interfaces." },
+        { "pattern": "HEALTHCHECK[\\s\\S]*api/health", "why": "Health check on the app's health route." }
+      ],
+      "reject": [
+        { "pattern": "npm (i|install|ci)|corepack", "why": "pnpm only, no Corepack." },
+        { "pattern": "COPY --from=builder[^\\n]*node_modules \\.", "why": "Full node_modules in the runner instead of the traced standalone output." },
+        { "pattern": "FROM node:(lts|latest|26)(-alpine)?\\s", "why": "A floating tag." }
+      ]
+    },
+    {
+      "id": "public-env-build-arg",
+      "prompt": "Our app needs NEXT_PUBLIC_POSTHOG_KEY. Add it to the image build.",
+      "project": ["next", "turbo"],
+      "expect": [
+        { "pattern": "ARG NEXT_PUBLIC_POSTHOG_KEY", "why": "Inlined at build, so it's a build argument." },
+        { "pattern": "ENV NEXT_PUBLIC_POSTHOG_KEY=\\$\\{NEXT_PUBLIC_POSTHOG_KEY\\}", "why": "Exposed to next build in the builder stage." },
+        { "pattern": "build-args:[\\s\\S]*NEXT_PUBLIC_POSTHOG_KEY", "why": "The workflows pass it." }
+      ],
+      "reject": [
+        { "pattern": "configmap[\\s\\S]{0,200}NEXT_PUBLIC_POSTHOG_KEY", "why": "A runtime ConfigMap value can't reach code inlined at build." },
+        { "pattern": "ARG NEXT_PUBLIC_POSTHOG_KEY[\\s\\S]*FROM \\$\\{NODE_IMAGE\\} AS runner[\\s\\S]*ARG NEXT_PUBLIC_POSTHOG_KEY", "why": "The runner doesn't need it." }
+      ]
+    },
+    {
+      "id": "private-registry-token",
+      "prompt": "We now install @acme/sdk from a private npm registry that needs a token. Make the Docker build work.",
+      "project": ["next", "turbo"],
+      "expect": [
+        { "pattern": "--mount=type=secret,id=[a-z_]+", "why": "The token comes in as a BuildKit secret." },
+        { "pattern": "secrets:\\s*\\|", "why": "The workflow passes the secret to build-push-action." }
+      ],
+      "reject": [
+        { "pattern": "ARG (NPM_TOKEN|NODE_AUTH_TOKEN)", "why": "A build arg stays in the image history." },
+        { "pattern": "COPY[^\\n]*\\.npmrc[^\\n]*\\n[\\s\\S]*authToken=[A-Za-z0-9]", "why": "A token written into a copied file." },
+        { "pattern": "ENV (NPM_TOKEN|NODE_AUTH_TOKEN)", "why": "An ENV with a secret ends up in the image." }
+      ]
+    }
+  ]
+}

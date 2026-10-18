@@ -1,0 +1,49 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm install --frozen-lockfile`, `pnpm typecheck` and `pnpm build`.",
+  "evals": [
+    {
+      "id": "add-date-fns",
+      "prompt": "Add date-fns to the web app.",
+      "project": ["next", "turbo"],
+      "expect": [
+        { "pattern": "date-fns:\\s*\\d+\\.\\d+\\.\\d+", "why": "The exact version goes in the workspace catalog." },
+        { "pattern": "\"date-fns\":\\s*\"catalog:\"", "why": "The package references the catalog." },
+        { "pattern": "pnpm install", "why": "The lockfile is updated with pnpm." }
+      ],
+      "reject": [
+        { "pattern": "\"date-fns\":\\s*\"\\^", "why": "Ranges in package.json bypass the catalog." },
+        { "pattern": "npm (i|install)|yarn add|npx ", "why": "pnpm only." },
+        { "pattern": "\\.npmrc", "why": "pnpm settings live in pnpm-workspace.yaml." }
+      ]
+    },
+    {
+      "id": "public-env-not-in-build",
+      "prompt": "NEXT_PUBLIC_SENTRY_DSN is undefined in the production build from CI, but works locally. Fix it.",
+      "project": ["next", "turbo"],
+      "expect": [
+        { "pattern": "NEXT_PUBLIC_\\*|NEXT_PUBLIC_SENTRY_DSN", "why": "The variable must be declared in the build task's env (strict env mode)." },
+        { "pattern": "turbo\\.json", "why": "The fix is in turbo.json." },
+        { "pattern": "build-args|ARG NEXT_PUBLIC_SENTRY_DSN", "why": "In the Docker build it must also be a build argument, since it's inlined at build." }
+      ],
+      "reject": [
+        { "pattern": "--env-mode=loose|\"envMode\":\\s*\"loose\"", "why": "Loose mode hides the problem and breaks cache correctness." },
+        { "pattern": "globalPassThroughEnv[^\\]]*NEXT_PUBLIC", "why": "Build-time values must be hashed, not passed through." }
+      ]
+    },
+    {
+      "id": "ignored-build-script",
+      "prompt": "pnpm install fails with ERR_PNPM_IGNORED_BUILDS for esbuild after I added a package. What do I do?",
+      "project": ["turbo"],
+      "expect": [
+        { "pattern": "allowBuilds", "why": "Build scripts are approved per package in allowBuilds." },
+        { "pattern": "esbuild:\\s*(true|false)", "why": "An explicit decision for this one package." },
+        { "pattern": "pnpm-workspace\\.yaml", "why": "The setting lives in the workspace file." }
+      ],
+      "reject": [
+        { "pattern": "dangerouslyAllowAllBuilds", "why": "Never allow every build script." },
+        { "pattern": "onlyBuiltDependencies", "why": "Removed in pnpm 11; allowBuilds replaces it." },
+        { "pattern": "strictDepBuilds:\\s*false", "why": "Don't switch the gate off." }
+      ]
+    }
+  ]
+}

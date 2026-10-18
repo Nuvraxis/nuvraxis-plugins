@@ -1,0 +1,49 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm typecheck`, `pnpm lint`, `pnpm build`, and a manual read of every action and handler.",
+  "evals": [
+    {
+      "id": "delete-member-action",
+      "prompt": "Add a Remove member button on the team settings page that only admins can use.",
+      "project": ["next", "react", "@nuvui/react", "valibot"],
+      "expect": [
+        { "pattern": "\"use server\"", "why": "The mutation is a Server Action." },
+        { "pattern": "requireSession\\(|getSession\\(", "why": "The action authenticates itself." },
+        { "pattern": "assertCan\\(|role\\s*[!=]==\\s*\"admin\"", "why": "The action checks the admin role itself, not only the page." },
+        { "pattern": "v\\.(parse|safeParse)\\(", "why": "The member id from FormData is validated." },
+        { "pattern": "import \"server-only\"", "why": "The data function is guarded against client imports." }
+      ],
+      "reject": [
+        { "pattern": "isAdmin\\s*&&\\s*<", "why": "Hiding the button is the only check: the action stays callable." },
+        { "pattern": "String\\(error\\)|error\\.message", "why": "Raw errors returned to the client." }
+      ]
+    },
+    {
+      "id": "login-return-to",
+      "prompt": "After login, send the user back to the page they came from. The login page gets it as ?next=.",
+      "project": ["next", "react", "valibot"],
+      "expect": [
+        { "pattern": "\\^\\\\/\\(\\?!\\[/\\\\\\\\\\]\\)|startsWith\\(\"/\"\\)[\\s\\S]{0,80}startsWith\\(\"//\"\\)|safeRedirectPath", "why": "The next value is checked to be a same-site relative path." },
+        { "pattern": "__Host-", "why": "The session cookie uses the __Host- prefix." },
+        { "pattern": "httpOnly:\\s*true", "why": "The session cookie is not readable from JavaScript." }
+      ],
+      "reject": [
+        { "pattern": "redirect\\((searchParams|params)\\.next\\)", "why": "Open redirect: the raw parameter is used." },
+        { "pattern": "localStorage\\.setItem\\([^)]*token", "why": "Tokens never go in localStorage." }
+      ]
+    },
+    {
+      "id": "csp-third-party-api",
+      "prompt": "The dashboard now calls https://api.acme-billing.com from the browser and the requests are blocked. Fix it.",
+      "project": ["next", "react", "@nuvui/react"],
+      "expect": [
+        { "pattern": "connect-src 'self' https://api\\.acme-billing\\.com", "why": "The exact host is added to connect-src only." },
+        { "pattern": "proxy\\.ts", "why": "The policy lives in proxy.ts." }
+      ],
+      "reject": [
+        { "pattern": "'unsafe-inline'[^;]*;?\\s*$|script-src[^;]*'unsafe-inline'", "why": "Loosening script-src is never the fix." },
+        { "pattern": "connect-src[^;]*(\\*|https:)(\\s|;|$)", "why": "Wildcards instead of the exact host." },
+        { "pattern": "Content-Security-Policy-Report-Only", "why": "Switching enforcement off is not the fix." }
+      ]
+    }
+  ]
+}

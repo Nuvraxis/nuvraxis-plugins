@@ -1,0 +1,47 @@
+{
+  "about": "Tasks to try the skill on: each prompt is the slash command as typed, in an empty directory. `expect` and `reject` are regular expressions over the files written and the commands run (the transcript). A match is a first look only; the report must show typecheck, lint, build, docker build and helm lint results.",
+  "evals": [
+    {
+      "id": "plain-scaffold",
+      "prompt": "/nuvraxis-frontend:scaffold-frontend-app portal",
+      "project": [],
+      "expect": [
+        { "pattern": "copy-templates\\.mjs portal", "why": "Templates are copied by the script, not rewritten by hand." },
+        { "pattern": "apps/portal/Dockerfile", "why": "The Dockerfile lands in the app folder." },
+        { "pattern": "charts/portal/Chart\\.yaml", "why": "One chart per app at charts/<app>." },
+        { "pattern": "ghcr\\.io/nuvraxis/portal", "why": "The image name is filled in." },
+        { "pattern": "pnpm typecheck[\\s\\S]*pnpm lint[\\s\\S]*pnpm build", "why": "The scaffold is proven before reporting." },
+        { "pattern": "helm lint --strict charts/portal", "why": "The chart is linted." }
+      ],
+      "reject": [
+        { "pattern": "npx |npm (i|install|create)|create-next-app", "why": "No npm, and no generator: the templates are the source." },
+        { "pattern": "__APP__", "why": "Every placeholder is replaced." },
+        { "pattern": "git commit", "why": "No commit unless the user asks." }
+      ]
+    },
+    {
+      "id": "uppercase-name",
+      "prompt": "/nuvraxis-frontend:scaffold-frontend-app CustomerPortal",
+      "project": [],
+      "expect": [
+        { "pattern": "customerportal|customer-portal", "why": "The name is lowercased for GHCR, Helm and Kubernetes." }
+      ],
+      "reject": [
+        { "pattern": "ghcr\\.io/nuvraxis/CustomerPortal", "why": "GHCR rejects uppercase names." },
+        { "pattern": "apps/CustomerPortal", "why": "Package and folder names are lowercase." }
+      ]
+    },
+    {
+      "id": "non-empty-directory",
+      "prompt": "/nuvraxis-frontend:scaffold-frontend-app billing (run inside a directory that already has a package.json)",
+      "project": ["existing package.json"],
+      "ask": "Whether to scaffold into ./billing/ instead of the current, non-empty directory.",
+      "expect": [
+        { "pattern": "\\./billing/?|billing/", "why": "Offers a subdirectory instead of overwriting." }
+      ],
+      "reject": [
+        { "pattern": "copy-templates\\.mjs billing \\.? ?--force", "why": "Never force-overwrite without asking." }
+      ]
+    }
+  ]
+}

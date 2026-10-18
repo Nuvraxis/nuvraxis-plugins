@@ -1,0 +1,47 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the chart still has to pass `helm lint --strict` and kubeconform with both values files.",
+  "evals": [
+    {
+      "id": "add-database-url",
+      "prompt": "The app now needs DATABASE_URL and API_BASE_URL in production. Wire them into the chart.",
+      "project": ["helm"],
+      "expect": [
+        { "pattern": "API_BASE_URL:", "why": "Non-secret config goes in values config (the ConfigMap)." },
+        { "pattern": "existingSecret:\\s*[a-z]", "why": "The secret is referenced by name, created outside the chart." }
+      ],
+      "reject": [
+        { "pattern": "kind:\\s*Secret[\\s\\S]*DATABASE_URL", "why": "Secret values are never templated by the chart." },
+        { "pattern": "DATABASE_URL:\\s*\"?postgres", "why": "A connection string with credentials in a values file." },
+        { "pattern": "NEXT_PUBLIC_API_BASE_URL", "why": "NEXT_PUBLIC_ is baked at build; the chart can't set it." }
+      ]
+    },
+    {
+      "id": "expose-with-tls",
+      "prompt": "Expose the app at portal.nuvraxis.com with HTTPS in production.",
+      "project": ["helm"],
+      "expect": [
+        { "pattern": "values-production\\.yaml", "why": "Production-only settings go in the production values file." },
+        { "pattern": "enabled:\\s*true", "why": "The ingress is switched on through values." },
+        { "pattern": "cert-manager\\.io/cluster-issuer", "why": "TLS certificates come from cert-manager." },
+        { "pattern": "secretName:\\s*portal-tls", "why": "TLS needs a secret name for the certificate." }
+      ],
+      "reject": [
+        { "pattern": "helm\\.sh/hook", "why": "No Helm hooks: Argo CD syncs this chart." },
+        { "pattern": "kind:\\s*Certificate", "why": "The ingress annotation is enough; no extra resource in the chart." }
+      ]
+    },
+    {
+      "id": "pods-restarting",
+      "prompt": "Pods restart every few minutes when the database is slow. Fix the chart.",
+      "project": ["helm"],
+      "expect": [
+        { "pattern": "/api/health", "why": "Probes use the dependency-free health route." },
+        { "pattern": "startupProbe|startup:", "why": "A startup probe covers boot so liveness doesn't kill slow starts." }
+      ],
+      "reject": [
+        { "pattern": "path:\\s*/api/(db|ready)[a-z-]*", "why": "A probe that checks the database restarts every pod when it's slow." },
+        { "pattern": "livenessProbe:\\s*\\{\\s*\\}|livenessProbe:\\s*null", "why": "Removing liveness hides the problem." }
+      ]
+    }
+  ]
+}
