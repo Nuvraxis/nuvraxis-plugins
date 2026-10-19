@@ -11,9 +11,9 @@ The plugins don't collect, store, sell or share personal data. They contain no t
 
 Instructions (skills), file templates and small Node scripts that Claude Code reads and runs on your machine. Everything they do happens locally, in your project, through Claude Code:
 
-- **Skills and templates** are text files. Reading them sends nothing anywhere.
-- **The formatting hook** (`nuvraxis-frontend`) runs Biome, installed in your own project, on files Claude edits. It doesn't read credentials and makes no network requests.
-- **The scaffold scripts** copy template files into a folder you choose. They make no network requests.
+- **Skills and templates** are text files. Reading them sends nothing anywhere. This includes the skills vendored from other projects (nuvui, Turborepo, and the official drizzle-kit skills).
+- **The formatting hook** (`nuvraxis-frontend`) runs the Biome installed in your own project on files Claude edits inside the project. It reads no credentials and makes no network requests.
+- **The scaffold scripts** (both plugins) copy template files into, and edit configuration files in, a folder you choose. They read no credentials and make no network requests.
 
 What Claude Code itself sends to Anthropic is covered by Anthropic's policies, not this one.
 
@@ -23,9 +23,17 @@ What Claude Code itself sends to Anthropic is covered by Anthropic's policies, n
 
 You can turn the server off with `/mcp` in Claude Code, or uninstall the plugin.
 
+`nuvraxis-fullstack` registers no MCP server.
+
+## Databases (nuvraxis-fullstack)
+
+The fullstack plugin helps you build an app that talks to your own PostgreSQL database. Connection strings live in your local `.env` file or in your Kubernetes Secrets; the plugin never reads, copies or transmits them, and no data from your database reaches Nuvraxis.
+
+Apps scaffolded with it list drizzle-kit's MCP server in their own `.mcp.json`, disabled by default. If you enable it, it runs locally and connects only to the database in your `DATABASE_URL`; it can change that database's schema, so enable it only against a local database.
+
 ## Things that happen because you run them
 
-The plugins tell Claude how to build and ship apps. Commands that follow from that, such as installing packages from the npm registry, building Docker images, or pushing to GitHub and GitHub Container Registry, contact those third-party services under their own terms, using your own accounts. The plugins never send those credentials to Nuvraxis.
+The plugins tell Claude how to build and ship apps. Commands that follow from that, such as installing packages from the npm registry, pulling container images, building Docker images, or pushing to GitHub and GitHub Container Registry, contact those third-party services under their own terms, using your own accounts. The plugins never send those credentials to Nuvraxis.
 
 ## Changes
 
