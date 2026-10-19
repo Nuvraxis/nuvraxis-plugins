@@ -7,13 +7,14 @@
       "project": ["next", "turbo", "@playwright/test"],
       "expect": [
         { "pattern": "pr\\.yaml", "why": "PR checks live in pr.yaml." },
-        { "pattern": "pnpm/action-setup@v6[\\s\\S]*actions/setup-node@v7", "why": "pnpm is set up before setup-node." },
+        { "pattern": "pnpm/action-setup@[0-9a-f]{40}[\\s\\S]*actions/setup-node@[0-9a-f]{40}", "why": "pnpm is set up before setup-node, both pinned by commit SHA." },
         { "pattern": "pnpm install --frozen-lockfile", "why": "Installs from the lockfile." },
         { "pattern": "timeout-minutes:", "why": "Every job has a timeout." },
         { "pattern": "draft", "why": "Draft PRs are skipped like the other jobs." }
       ],
       "reject": [
         { "pattern": "npx playwright|npm (ci|install)", "why": "pnpm only: pnpm exec playwright." },
+        { "pattern": "uses: [\\w.-]+/[\\w.-]+@(v\\d|main|master)\\b", "why": "Every action is pinned to a full commit SHA, never a tag or branch." },
         { "pattern": "permissions:\\s*write-all|contents:\\s*write", "why": "A test job needs read-only permissions." },
         { "pattern": "branches:\\s*\\[\\s*main\\s*\\]", "why": "pr.yaml has no branches filter." }
       ]
