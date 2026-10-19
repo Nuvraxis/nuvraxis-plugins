@@ -107,6 +107,10 @@ Users stay on the version they installed until `version` in `plugins/nuvraxis-fr
 
 Users update with `/plugin marketplace update nuvraxis-plugins`.
 
+## Privacy
+
+The plugins collect no data and contain no telemetry. Details, including what the nuvui MCP server receives: [PRIVACY.md](PRIVACY.md).
+
 ## License
 
 MIT. The vendored skills keep their upstream licenses.

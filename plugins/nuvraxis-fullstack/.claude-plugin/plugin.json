@@ -10,6 +10,7 @@
   "homepage": "https://github.com/Nuvraxis/nuvraxis-plugins",
   "repository": "https://github.com/Nuvraxis/nuvraxis-plugins",
   "license": "MIT",
+  "privacyPolicyUrl": "https://github.com/Nuvraxis/nuvraxis-plugins/blob/main/PRIVACY.md",
   "keywords": [
     "drizzle",
     "postgres",
