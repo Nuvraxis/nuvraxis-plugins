@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Checks the plugin's own skills against the authoring standard, and that every template file
-// embedded in a skill is byte-for-byte the file in templates/.
+// Checks every plugin's own skills against the authoring standard, and that every template file
+// embedded in a skill is byte-for-byte the file in that plugin's templates/.
 //
 //   pnpm check
 //
@@ -17,9 +17,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PLUGIN = join(ROOT, "plugins", "nuvraxis-frontend");
-const SKILLS = join(PLUGIN, "skills");
-const TEMPLATES = join(PLUGIN, "templates");
+const PLUGINS = join(ROOT, "plugins");
 const MAX_LINES = 300;
 
 const problems = [];
@@ -101,7 +99,7 @@ function checkEvals(skillDir) {
 	}
 }
 
-function checkMarkdown(file) {
+function checkMarkdown(file, templates) {
 	const text = read(file);
 	// Relative links, ignoring URLs, anchors and ${...} placeholders.
 	for (const [, target] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
@@ -112,7 +110,7 @@ function checkMarkdown(file) {
 	// Embedded templates.
 	const embedded = /<!-- template: (\S+) -->\n```[^\n]*\n([\s\S]*?)\n```(?:\n|$)/g;
 	for (const [, templatePath, block] of text.matchAll(embedded)) {
-		const source = join(TEMPLATES, ...templatePath.split("/"));
+		const source = join(templates, ...templatePath.split("/"));
 		if (!existsSync(source)) {
 			report(file, `embeds templates/${templatePath}, which doesn't exist`);
 			continue;
@@ -123,21 +121,31 @@ function checkMarkdown(file) {
 	}
 }
 
-const skills = readdirSync(SKILLS).filter((name) => statSync(join(SKILLS, name)).isDirectory());
-const own = skills.filter((name) => !existsSync(join(SKILLS, name, "VENDORED.md")));
-
-for (const name of own) {
-	const dir = join(SKILLS, name);
-	checkSkillFile(dir, name);
-	checkReferences(dir);
-	checkEvals(dir);
-	for (const file of markdownFiles(dir)) checkMarkdown(file);
+const summary = [];
+for (const plugin of readdirSync(PLUGINS).filter((name) => statSync(join(PLUGINS, name)).isDirectory())) {
+	const skillsDir = join(PLUGINS, plugin, "skills");
+	const templates = join(PLUGINS, plugin, "templates");
+	const skills = existsSync(skillsDir)
+		? readdirSync(skillsDir).filter((name) => statSync(join(skillsDir, name)).isDirectory())
+		: [];
+	const own = skills.filter((name) => !existsSync(join(skillsDir, name, "VENDORED.md")));
+	for (const name of own) {
+		const dir = join(skillsDir, name);
+		checkSkillFile(dir, name);
+		checkReferences(dir);
+		checkEvals(dir);
+		for (const file of markdownFiles(dir)) checkMarkdown(file, templates);
+	}
+	// Markdown shipped in templates (CLAUDE.md, patch instructions) may embed templates too.
+	if (existsSync(templates)) {
+		for (const file of markdownFiles(templates)) checkMarkdown(file, templates);
+	}
+	summary.push(`${plugin}: ${own.length} own, ${skills.length - own.length} vendored`);
 }
-checkMarkdown(join(TEMPLATES, "CLAUDE.md"));
 
 if (problems.length > 0) {
 	console.error(problems.map((p) => `✗ ${p}`).join("\n"));
-	console.error(`\n${problems.length} problem(s) in ${own.length} own skills.`);
+	console.error(`\n${problems.length} problem(s). ${summary.join("; ")}.`);
 	process.exit(1);
 }
-console.log(`✓ ${own.length} own skills meet the standard; embedded templates match (vendored: ${skills.length - own.length}).`);
+console.log(`✓ Own skills meet the standard; embedded templates match. ${summary.join("; ")}.`);

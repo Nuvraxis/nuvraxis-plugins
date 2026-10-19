@@ -1,16 +1,38 @@
 {
 	"skills": {
 		"nuvui": {
+			"plugin": "nuvraxis-frontend",
 			"repo": "Nuvraxis/nuvui",
 			"path": "skills/nuvui",
 			"commit": "e37e2d47468b0a67b6b85822a6f8bf4c7c856c9d",
 			"date": "2026-10-18T07:37:51+02:00"
 		},
 		"turborepo": {
+			"plugin": "nuvraxis-frontend",
 			"repo": "vercel/turborepo",
 			"path": "skills/turborepo",
-			"commit": "bdfbb2141e5ce76d2300c52fe38c01e7eb42129a",
-			"date": "2026-10-17T16:31:54Z"
+			"commit": "3962b47523dee19de217cbbe2bf81522416f7ed3",
+			"date": "2026-10-18T18:30:33-06:00"
+		}
+	},
+	"packages": {
+		"drizzle-kit": {
+			"plugin": "nuvraxis-fullstack",
+			"version": "1.0.0-rc.4",
+			"integrity": "sha512-KZCpjRyu+oYHLj/UJogfFlOkWhHVkaEI2EOT1U3NDVXUzLoTyPjqwFxwOrlQxsY6jzRyxcz4EacqboGfhEeYrA==",
+			"tarball": "https://registry.npmjs.org/drizzle-kit/-/drizzle-kit-1.0.0-rc.4.tgz",
+			"path": "skills",
+			"versionFrom": "plugins/nuvraxis-fullstack/templates/pnpm-catalog.yaml",
+			"skills": {
+				"drizzle": "drizzle-kit",
+				"drizzle-generate": "drizzle-kit-generate",
+				"drizzle-hints": "drizzle-kit-hints",
+				"drizzle-migrations": "drizzle-kit-migrations",
+				"drizzle-output-modes": "drizzle-kit-output-modes",
+				"drizzle-pull": "drizzle-kit-pull",
+				"drizzle-push": "drizzle-kit-push",
+				"drizzle-responses-and-errors": "drizzle-kit-responses-and-errors"
+			}
 		}
 	}
 }
