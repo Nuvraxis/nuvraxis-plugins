@@ -1,0 +1,51 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; charts still have to pass helm lint --strict and kubeconform.",
+  "evals": [
+    {
+      "id": "deploy-with-database",
+      "prompt": "We're going to production with an RDS Postgres. Set up the chart so the app gets its database URL and migrations run on deploy.",
+      "project": ["helm", "drizzle-orm@1.0.0-rc.4"],
+      "expect": [
+        { "pattern": "externalSecret:\\s*\\n\\s*name:", "why": "The Secret is referenced by name in values." },
+        { "pattern": "argocd\\.argoproj\\.io/hook: PreSync", "why": "Migrations run as a PreSync Job." },
+        { "pattern": "BeforeHookCreation", "why": "The previous Job is replaced on the next sync." },
+        { "pattern": "sslmode=verify-full", "why": "TLS to RDS is verified, configured in the URL." },
+        { "pattern": "packages/db/dist/migrate\\.mjs", "why": "The Job runs the bundled runner from the app image." }
+      ],
+      "reject": [
+        { "pattern": "kind:\\s*StatefulSet|bitnami/postgresql|image: postgres", "why": "The chart never deploys Postgres." },
+        { "pattern": "DATABASE_URL:\\s*\"?postgres(ql)?://[^\"\\n]*@[a-z0-9.-]*rds", "why": "A real connection string in values." },
+        { "pattern": "ttlSecondsAfterFinished", "why": "Leaves the Argo app OutOfSync." },
+        { "pattern": "helm\\.sh/hook", "why": "Argo hooks only." }
+      ]
+    },
+    {
+      "id": "migrate-pod-stuck",
+      "prompt": "The first Argo CD sync of the app is stuck; the migrate pod shows CreateContainerConfigError.",
+      "project": ["helm"],
+      "expect": [
+        { "pattern": "Secret", "why": "The Secret with DATABASE_URL doesn't exist yet." },
+        { "pattern": "before the first sync|PreSync", "why": "The Job runs before anything else in the chart." },
+        { "pattern": "kubectl[^\\n]*get secret", "why": "Points at checking the Secret." }
+      ],
+      "reject": [
+        { "pattern": "migrate\\.enabled:\\s*false", "why": "Disabling migrations hides the problem." },
+        { "pattern": "kind: Secret[\\s\\S]*DATABASE_URL:", "why": "Templating the secret value into the chart." }
+      ]
+    },
+    {
+      "id": "undo-bad-migration",
+      "prompt": "Yesterday's migration dropped a column we still need in production. Roll it back.",
+      "project": ["drizzle-orm@1.0.0-rc.4", "drizzle-kit@1.0.0-rc.4"],
+      "expect": [
+        { "pattern": "new migration|db:generate|drizzle-kit generate", "why": "Rollback is a new forward migration." },
+        { "pattern": "backup|PITR|point-in-time", "why": "Dropped data comes back only from the provider's backups." }
+      ],
+      "reject": [
+        { "pattern": "drizzle/2\\d{13}_[a-z_]+/migration\\.sql[\\s\\S]{0,80}(edit|delete|remove)", "why": "Never edit or delete a committed migration." },
+        { "pattern": "drizzle-kit push", "why": "push never touches production." },
+        { "pattern": "DELETE FROM drizzle\\.__drizzle_migrations", "why": "Rewriting the migrations table breaks every later deploy." }
+      ]
+    }
+  ]
+}

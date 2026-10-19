@@ -1,0 +1,49 @@
+{
+  "about": "Tasks to try the skill on: each prompt is the slash command as typed. `expect` and `reject` are regular expressions over the files written and the commands run (the transcript). A match is a first look only; the report must show migrate (twice), typecheck, lint, test, build, docker build and helm results.",
+  "evals": [
+    {
+      "id": "after-frontend-scaffold",
+      "prompt": "/nuvraxis-fullstack:scaffold-fullstack portal (run in a repo created by /nuvraxis-frontend:scaffold-frontend-app portal)",
+      "project": ["nuvraxis-frontend scaffold for portal"],
+      "expect": [
+        { "pattern": "apply-fullstack\\.mjs portal [^\\n]*--check", "why": "The precheck runs first." },
+        { "pattern": "apply-fullstack\\.mjs portal", "why": "The layer is applied by the script, not rewritten by hand." },
+        { "pattern": "biome check --write", "why": "Script-written JSON is formatted before linting." },
+        { "pattern": "No schema changes", "why": "db:generate is a no-op on a fresh scaffold." },
+        { "pattern": "database is up to date", "why": "The second migrate run proves idempotence." },
+        { "pattern": "migrate-job\\.yaml|argocd\\.argoproj\\.io/hook: PreSync", "why": "The chart renders the migrate Job." },
+        { "pattern": "no authentication|authenticat", "why": "The report flags the example action as unauthenticated." }
+      ],
+      "reject": [
+        { "pattern": "drizzle-kit push", "why": "push is never part of the scaffold." },
+        { "pattern": "npx |npm (i|install)", "why": "pnpm only." },
+        { "pattern": "git commit", "why": "No commit unless asked." }
+      ]
+    },
+    {
+      "id": "no-frontend-yet",
+      "prompt": "/nuvraxis-fullstack:scaffold-fullstack billing (run in an empty directory)",
+      "project": [],
+      "expect": [
+        { "pattern": "/nuvraxis-frontend:scaffold-frontend-app billing", "why": "Tells the user the exact command to run first." },
+        { "pattern": "/plugin install nuvraxis-frontend@nuvraxis-plugins", "why": "Says how to install the frontend plugin if it's missing." }
+      ],
+      "reject": [
+        { "pattern": "packages/db/src", "why": "Nothing is created without a frontend scaffold." },
+        { "pattern": "copy-templates\\.mjs", "why": "Doesn't try to run the frontend scaffold's script itself." }
+      ]
+    },
+    {
+      "id": "run-twice",
+      "prompt": "/nuvraxis-fullstack:scaffold-fullstack portal (packages/db already exists)",
+      "project": ["nuvraxis-frontend scaffold for portal", "packages/db"],
+      "expect": [
+        { "pattern": "already", "why": "Reports that the layer was added before and stops." }
+      ],
+      "reject": [
+        { "pattern": "--force", "why": "Never forces over existing files." },
+        { "pattern": "rm -rf packages/db", "why": "Never deletes the existing database package." }
+      ]
+    }
+  ]
+}

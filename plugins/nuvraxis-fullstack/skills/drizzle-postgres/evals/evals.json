@@ -1,0 +1,57 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm typecheck`, `pnpm --filter @repo/db test` and `pnpm db:check`.",
+  "evals": [
+    {
+      "id": "add-posts-table",
+      "prompt": "Add a posts table: each post has an author (a user), a title, a body, an optional publish date, and timestamps. Users can have many posts.",
+      "project": ["drizzle-orm@1.0.0-rc.4", "drizzle-kit@1.0.0-rc.4", "pg"],
+      "expect": [
+        { "pattern": "src/schema/posts\\.ts", "why": "One table per file under src/schema." },
+        { "pattern": "snakeCase\\.table\\(\\s*\"posts\"", "why": "snakeCase.table keeps column names written once." },
+        { "pattern": "references\\(\\(\\) => users\\.id, \\{ onDelete: \"(cascade|restrict|set null)\"", "why": "The foreign key states onDelete." },
+        { "pattern": "index\\(\"posts_author_id_idx\"\\)", "why": "The foreign key column is indexed." },
+        { "pattern": "timestamp\\(\\{ withTimezone: true", "why": "Timestamps are timestamptz." },
+        { "pattern": "r\\.many\\.posts\\(\\)", "why": "Relations v2 in relations.ts." },
+        { "pattern": "export \\* from \"\\./posts\"", "why": "schema/index.ts re-exports the new table." },
+        { "pattern": "db:generate|drizzle-kit generate", "why": "A migration is generated, not hand-written or pushed." }
+      ],
+      "reject": [
+        { "pattern": "pgTable\\(\"posts\"[\\s\\S]{0,200}\"author_id\"", "why": "Column names written twice instead of snakeCase.table." },
+        { "pattern": "from \"drizzle-orm/_relations\"|\\brelations\\(posts", "why": "The v1 relations() API, not defineRelations." },
+        { "pattern": "drizzle-kit push", "why": "push is for throwaway local databases only." },
+        { "pattern": "varchar\\(\\{ length: 255 \\}\\)", "why": "text, unless a real limit exists." }
+      ]
+    },
+    {
+      "id": "author-stats-query",
+      "prompt": "Write a query that returns the 10 authors with the most published posts in the last 30 days, with their post count.",
+      "project": ["drizzle-orm@1.0.0-rc.4", "pg"],
+      "expect": [
+        { "pattern": "\\.groupBy\\(", "why": "Aggregates use the select builder, not RQB." },
+        { "pattern": "count\\(\\)", "why": "Counting in SQL." },
+        { "pattern": "\\.limit\\(10\\)", "why": "The list has a limit." },
+        { "pattern": "db: Executor|\\(db: Executor", "why": "Query functions take the executor first." },
+        { "pattern": "select\\(\\{", "why": "Named columns, not select()." }
+      ],
+      "reject": [
+        { "pattern": "`[^`]*\\$\\{[^}]+\\}[^`]*`\\s*\\)?\\s*;?\\s*//?\\s*raw|sql\\.raw\\(`[^`]*\\$\\{", "why": "Input interpolated into raw SQL." },
+        { "pattern": "\\.filter\\([^)]*\\)\\.length", "why": "Counting in JavaScript after fetching every row." },
+        { "pattern": "findMany\\([^)]*groupBy", "why": "RQB has no groupBy; use the select builder." }
+      ]
+    },
+    {
+      "id": "transfer-credits",
+      "prompt": "Add a function that moves credits from one account to another and sends a notification email afterwards.",
+      "project": ["drizzle-orm@1.0.0-rc.4", "pg"],
+      "expect": [
+        { "pattern": "\\.transaction\\(async \\(tx\\)", "why": "Both updates happen in one transaction." },
+        { "pattern": "tx\\.(update|select|insert)", "why": "The writes go through tx, not db." },
+        { "pattern": "returning\\(", "why": "Writes return what the caller needs." }
+      ],
+      "reject": [
+        { "pattern": "transaction\\(async \\(tx\\) => \\{[\\s\\S]*?(sendEmail|fetch\\(|\\.send\\()[\\s\\S]*?\\}\\)", "why": "Slow I/O inside the transaction holds locks and a connection." },
+        { "pattern": "\\.prepare\\(\"[a-z_]+\"\\)", "why": "Named prepared statements break behind PgBouncer transaction pooling." }
+      ]
+    }
+  ]
+}

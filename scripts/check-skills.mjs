@@ -12,13 +12,14 @@
 // In any Markdown file of an own skill, a line `<!-- template: <path> -->` followed by a fenced
 // block means the block must equal templates/<path>.
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS = join(ROOT, "plugins");
 const MAX_LINES = 300;
+const FIX = process.argv.includes("--fix");
 
 const problems = [];
 const report = (file, message) => problems.push(`${relative(ROOT, file).replaceAll("\\", "/")}: ${message}`);
@@ -107,16 +108,36 @@ function checkMarkdown(file, templates) {
 		const path = resolve(dirname(file), target.split("#")[0]);
 		if (!existsSync(path)) report(file, `broken link to ${target}`);
 	}
-	// Embedded templates.
-	const embedded = /<!-- template: (\S+) -->\n```[^\n]*\n([\s\S]*?)\n```(?:\n|$)/g;
-	for (const [, templatePath, block] of text.matchAll(embedded)) {
+	// Embedded templates. With --fix, a drifted copy is rewritten from the template instead.
+	// The block runs to the first fence at the start of a line, so an empty block can't swallow
+	// the rest of the file. `body` is the block's lines, each ending in "\n" ("" when empty).
+	const embedded = /(<!-- template: (\S+) -->\n```[^\n]*\n)((?:(?!```)[^\n]*\n)*?)(```)(?=\n|$)/g;
+	const expected = (source) => {
+		const content = read(source).replace(/\n$/, "");
+		return content.length > 0 ? `${content}\n` : "";
+	};
+	let fixed = text;
+	const markers = (text.match(/<!-- template: \S+ -->/g) ?? []).length;
+	const matched = [...text.matchAll(embedded)];
+	if (matched.length !== markers) report(file, `${markers - matched.length} template marker(s) not followed by a fenced block`);
+	for (const [, , templatePath, body] of matched) {
 		const source = join(templates, ...templatePath.split("/"));
 		if (!existsSync(source)) {
 			report(file, `embeds templates/${templatePath}, which doesn't exist`);
 			continue;
 		}
-		if (read(source).replace(/\n$/, "") !== block) {
-			report(file, `embedded copy of templates/${templatePath} has drifted; regenerate it from the template`);
+		if (expected(source) !== body && !FIX) {
+			report(file, `embedded copy of templates/${templatePath} has drifted; run \`pnpm check --fix\``);
+		}
+	}
+	if (FIX) {
+		fixed = text.replace(embedded, (match, head, templatePath, _body, tail) => {
+			const source = join(templates, ...templatePath.split("/"));
+			return existsSync(source) ? head + expected(source) + tail : match;
+		});
+		if (fixed !== text) {
+			writeFileSync(file, fixed);
+			console.log(`fixed embedded templates in ${relative(ROOT, file).replaceAll("\\", "/")}`);
 		}
 	}
 }

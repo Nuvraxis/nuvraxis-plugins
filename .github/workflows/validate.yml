@@ -149,3 +149,62 @@ jobs:
           helm template "${APP}" "${chart}" -f "${chart}/values-production.yaml" > rendered.yaml
           grep -q 'argocd.argoproj.io/hook: PreSync' rendered.yaml || { echo "::error::migrate Job did not render"; exit 1; }
           docker run --rm -i "${KUBECONFORM_IMAGE}" -strict -summary -kubernetes-version "${KUBERNETES_VERSION}" - < rendered.yaml
+
+  # Frontend scaffold + the fullstack database layer, exactly as the two scaffolds apply them,
+  # then every check the generated repo runs, against a real Postgres 17.
+  fullstack-templates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP: ci-demo
+      DATABASE_URL: postgres://app:app@localhost:5432/app
+    services:
+      postgres:
+        image: postgres:17.11-alpine3.24@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: plugins/nuvraxis-frontend/templates/.node-version
+      - name: Scaffold frontend, then add the database layer
+        run: |
+          demo="${RUNNER_TEMP}/ci-demo"
+          echo "DEMO=${demo}" >> "$GITHUB_ENV"
+          node plugins/nuvraxis-frontend/skills/scaffold-frontend-app/scripts/copy-templates.mjs "${APP}" "${demo}"
+          node plugins/nuvraxis-fullstack/skills/scaffold-fullstack/scripts/apply-fullstack.mjs "${APP}" "${demo}"
+          git -C "${demo}" init --quiet
+      - name: Install, format, lint, typecheck, test, build
+        working-directory: ${{ env.DEMO }}
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm exec biome check --write .
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
+      - name: drizzle-kit check, generate is a no-op, migrate twice with the bundled runner
+        working-directory: ${{ env.DEMO }}
+        run: |
+          pnpm db:check
+          pnpm db:generate | tee generate.log
+          grep -q "No schema changes" generate.log
+          node packages/db/dist/migrate.mjs
+          node packages/db/dist/migrate.mjs | tee second-run.log
+          grep -q "database is up to date" second-run.log
+      - name: actionlint on the generated workflows (pr.yaml now has the db job)
+        working-directory: ${{ env.DEMO }}
+        run: docker run --rm -v "${PWD}:/repo" -w /repo rhysd/actionlint:1.7.12 -color
