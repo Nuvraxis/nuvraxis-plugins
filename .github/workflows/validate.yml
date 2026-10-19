@@ -27,17 +27,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26.12.0
-      - name: claude plugin validate --strict (plugin and marketplace)
+      - name: claude plugin validate --strict (both plugins and the marketplace)
         run: |
-          pnpm dlx "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" plugin validate ./plugins/nuvraxis-frontend --strict
-          pnpm dlx "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" plugin validate . --strict
+          for target in ./plugins/nuvraxis-frontend ./plugins/nuvraxis-fullstack .; do
+            pnpm dlx "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" plugin validate "${target}" --strict
+          done
       - name: Vendored skills match UPSTREAM.json
         run: node scripts/sync-upstream.mjs --check
       - name: Own skills meet the standard; embedded templates match
@@ -51,12 +52,12 @@ jobs:
     env:
       APP: ci-demo
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       # Same pnpm version as the templates: both package.json files pin pnpm@12.14.0.
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: plugins/nuvraxis-frontend/templates/.node-version
       - name: Scaffold
@@ -75,7 +76,7 @@ jobs:
       - name: actionlint on the generated workflows
         working-directory: ${{ env.DEMO }}
         run: docker run --rm -v "${PWD}:/repo" -w /repo rhysd/actionlint:1.7.12 -color
-      - uses: azure/setup-helm@v5
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: ${{ env.HELM_VERSION }}
       - name: helm lint + kubeconform
@@ -88,9 +89,9 @@ jobs:
             echo "---"
             helm template "${APP}" "charts/${APP}" -f "charts/${APP}/values-production.yaml"
           } | docker run --rm -i "${KUBECONFORM_IMAGE}" -strict -summary -kubernetes-version "${KUBERNETES_VERSION}" -
-      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: docker build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ${{ env.DEMO }}
           file: ${{ env.DEMO }}/apps/${{ env.APP }}/Dockerfile
@@ -115,3 +116,36 @@ jobs:
           done
           docker logs app
           exit 1
+
+  # The frontend chart with nuvraxis-fullstack's charts-overlay merged in, the way the
+  # fullstack scaffold applies it, so the migrate Job is linted and schema-checked too.
+  fullstack-chart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      APP: ci-demo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: plugins/nuvraxis-frontend/templates/.node-version
+      - name: Scaffold the frontend, then apply the fullstack chart overlay (throwaway, in RUNNER_TEMP)
+        run: |
+          demo="${RUNNER_TEMP}/ci-demo"
+          echo "DEMO=${demo}" >> "$GITHUB_ENV"
+          node plugins/nuvraxis-frontend/skills/scaffold-frontend-app/scripts/copy-templates.mjs "${APP}" "${demo}"
+          node plugins/nuvraxis-fullstack/skills/scaffold-fullstack/scripts/apply-chart-overlay.mjs "${APP}" "${demo}"
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: helm lint + template + kubeconform; the migrate Job must render
+        working-directory: ${{ env.DEMO }}
+        run: |
+          chart="charts/${APP}"
+          helm lint --strict "${chart}"
+          helm lint --strict "${chart}" -f "${chart}/values-production.yaml"
+          helm template "${APP}" "${chart}" -f "${chart}/values-production.yaml" > rendered.yaml
+          grep -q 'argocd.argoproj.io/hook: PreSync' rendered.yaml || { echo "::error::migrate Job did not render"; exit 1; }
+          docker run --rm -i "${KUBECONFORM_IMAGE}" -strict -summary -kubernetes-version "${KUBERNETES_VERSION}" - < rendered.yaml
