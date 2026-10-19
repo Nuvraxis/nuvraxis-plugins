@@ -39,7 +39,7 @@ It prints every file it creates or changes, and never overwrites a file it didn'
 | Step | Result |
 |---|---|
 | `packages/db/` | schema (`users`), relations, client, query functions + PGlite tests, valibot schemas, bundled migrate/seed, initial migration |
-| `pnpm-workspace.yaml` | catalog entries (drizzle-orm/kit 1.0.0-rc.4, pg, PGlite, vitest, esbuild) and `allowBuilds: esbuild: true` |
+| `pnpm-workspace.yaml` | catalog entries (drizzle-orm/kit 1.0.0-rc.4, pg, PGlite, vitest, esbuild), `allowBuilds: esbuild: true`, and `permissions: drizzle-kit: skills: false` (the plugin already ships drizzle-kit's skills) |
 | `apps/<app>/package.json` | depends on `@<scope>/db` |
 | root `package.json` | `db:generate`, `db:check`, `db:migrate`, `db:seed`, `db:studio` |
 | `turbo.json` | `test` declares `DATABASE_URL` |

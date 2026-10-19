@@ -33,7 +33,7 @@ node "${CLAUDE_SKILL_DIR}/scripts/copy-templates.mjs" <name> <target-dir>
 It replaces `__APP__` in paths and contents and renames `gitignore`/`gitattributes` to their dotfiles. It prints every file it writes. What you get:
 
 ```
-.github/workflows/{pr,main,release}.yaml   .vscode/{settings,extensions}.json
+.github/workflows/{pr,main,release}.yaml   .github/dependabot.yml   .vscode/{settings,extensions}.json
 .mcp.json   CLAUDE.md   biome.json   stylelint.config.mjs   turbo.json
 package.json   pnpm-workspace.yaml   .node-version   .gitignore   .gitattributes   .dockerignore
 packages/tsconfig/{package.json,base.json}

@@ -111,23 +111,28 @@ function editJson(rel, change) {
 
 const sortKeys = (object) => Object.fromEntries(Object.entries(object).sort(([a], [b]) => a.localeCompare(b)));
 
-// Entries of a top-level YAML map in the flat `key: value` form pnpm-workspace.yaml uses.
+// A top-level YAML map in pnpm-workspace.yaml, as groups: each two-space-indented key with
+// the deeper-indented lines under it (`drizzle-kit:` + `skills: false`). Comments are dropped.
 function yamlBlock(text, key) {
 	const lines = text.split("\n");
 	const start = lines.findIndex((line) => line === `${key}:`);
 	if (start === -1) return undefined;
 	let end = start + 1;
 	while (end < lines.length && (/^\s+\S/.test(lines[end]) || lines[end].trim().startsWith("#"))) end++;
-	const entries = lines.slice(start + 1, end).filter((line) => /^\s+[^\s#]/.test(line));
-	return { start, end, entries, lines };
+	const groups = [];
+	for (const line of lines.slice(start + 1, end)) {
+		if (/^ {2}[^\s#]/.test(line)) groups.push([line]);
+		else if (/^ {3,}[^\s#]/.test(line) && groups.length > 0) groups[groups.length - 1].push(line);
+	}
+	return { start, end, groups, lines };
 }
-const entryKey = (line) => line.trim().split(":")[0].replaceAll('"', "");
+const groupKey = (group) => group[0].trim().split(":")[0].replaceAll('"', "");
 
-function mergeYamlBlock(text, key, newEntries) {
+function mergeYamlBlock(text, key, newGroups) {
 	const block = yamlBlock(text, key);
-	if (!block) return `${text.replace(/\n*$/, "\n")}\n${key}:\n${newEntries.join("\n")}\n`;
-	const existing = new Set(block.entries.map(entryKey));
-	const additions = newEntries.filter((line) => !existing.has(entryKey(line)));
+	if (!block) return `${text.replace(/\n*$/, "\n")}\n${key}:\n${newGroups.flat().join("\n")}\n`;
+	const existing = new Set(block.groups.map(groupKey));
+	const additions = newGroups.filter((group) => !existing.has(groupKey(group))).flat();
 	if (additions.length === 0) return text;
 	// Insert after the block's last entry, keeping any trailing comments in place.
 	let insertAt = block.end;
@@ -145,9 +150,9 @@ copyTree(join(TEMPLATES, "packages", "db"), at("packages", "db"));
 {
 	const catalog = read(join(TEMPLATES, "pnpm-catalog.yaml"));
 	let workspace = read(at("pnpm-workspace.yaml"));
-	for (const key of ["catalog", "allowBuilds"]) {
+	for (const key of ["catalog", "allowBuilds", "permissions"]) {
 		const block = yamlBlock(catalog, key);
-		if (block) workspace = mergeYamlBlock(workspace, key, block.entries);
+		if (block) workspace = mergeYamlBlock(workspace, key, block.groups);
 	}
 	writeFileSync(at("pnpm-workspace.yaml"), workspace);
 	note("pnpm-workspace.yaml");

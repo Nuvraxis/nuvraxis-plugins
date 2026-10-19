@@ -67,7 +67,9 @@ Use for how the database code is organised and consumed. What goes inside a sche
 
 12. **The seed is idempotent and local-only.** `onConflictDoNothing({ target })` on a natural key, so a second run inserts nothing. It never runs in CI against shared databases or in the cluster.
 
-13. **Adding a table means four places:** `src/schema/<table>.ts` (+ re-export), `src/relations.ts`, `src/queries/<table>.ts` (+ tests), then export the query functions and types from `src/index.ts`. Generate the migration in the same PR.
+13. **drizzle-kit's own agent skills stay denied in `pnpm-workspace.yaml`.** pnpm 12 lets packages ask to install agent skills; drizzle-kit does. This plugin already ships the same skills at the same version, so the workspace carries `permissions: { drizzle-kit: { skills: false } }`. Don't `pnpm approve drizzle-kit`: two copies of the same skills would compete.
+
+14. **Adding a table means four places:** `src/schema/<table>.ts` (+ re-export), `src/relations.ts`, `src/queries/<table>.ts` (+ tests), then export the query functions and types from `src/index.ts`. Generate the migration in the same PR.
 
 ## Verify
 

@@ -129,7 +129,8 @@ Regenerate it with \`pnpm sync\` from the repository root. CI runs \`pnpm sync -
 function pinnedVersion(source) {
 	const text = readFileSync(join(ROOT, source.versionFrom), "utf8");
 	const escaped = source.package.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
-	const match = new RegExp(`^\\s+"?${escaped}"?:\\s*([^\\s#]+)`, "m").exec(text);
+	// `  drizzle-kit: 1.0.0-rc.4` on one line; a bare `drizzle-kit:` map key (permissions) doesn't count.
+	const match = new RegExp(`^[ \\t]+"?${escaped}"?:[ \\t]*([^\\s#]+)`, "m").exec(text);
 	if (!match) throw new Error(`${source.versionFrom} doesn't pin ${source.package}`);
 	return match[1];
 }

@@ -16,3 +16,9 @@ catalog:
 allowBuilds:
   # esbuild's install script links its platform binary; drizzle-kit and the migrate bundle need it.
   esbuild: true
+
+permissions:
+  # drizzle-kit asks pnpm to install its agent skills into the project. The nuvraxis-fullstack
+  # plugin already ships the same skills at the same version, so a second copy is denied.
+  drizzle-kit:
+    skills: false
