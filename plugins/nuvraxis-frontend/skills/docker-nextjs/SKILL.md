@@ -26,7 +26,7 @@ The template's `apps/<app>/Dockerfile` is the source of truth; [references/Docke
    `node:26.12.0-alpine3.24@sha256:6f08…` in one `ARG NODE_IMAGE`, used by both `base` and `runner`. The digest is the multi-arch index, so amd64 and arm64 both resolve.
    Why Alpine over distroless: distroless Node publishes only floating tags (`latest`, `nonroot`), so the exact Node version can't be matched to `.node-version`, and it has no `wget` for the HEALTHCHECK. Alpine is small, pins exactly, and `sharp` ships prebuilt musl binaries, so image optimisation works without extra packages.
 
-3. **Install pnpm from the GitHub release binary, verified by SHA-256. Never `npm i -g pnpm`, never Corepack, never an unverified `curl | sh`.**
+3. **Install pnpm from the GitHub release binary, verified by SHA-256. Never `npm i -g pnpm`, never Corepack, never a downloaded install script piped into a shell.**
    One `ARG PNPM_VERSION` equal to `packageManager`, plus one checksum per architecture for `pnpm-linux-{x64,arm64}-musl.tar.gz`, selected by `TARGETARCH`. To bump: change the three ARGs, taking the sha256 values from the release's asset digests (`gh release view v<version> --repo pnpm/pnpm --json assets`), and bump `packageManager` in the same commit. Fallback if the release format changes: base the `pruner`/`deps`/`builder` stages on `ghcr.io/pnpm/pnpm:<version>` (no Node, add it) rather than inventing a new install method.
 
 4. **The runner copies exactly three things.**
@@ -62,7 +62,7 @@ The template's `apps/<app>/Dockerfile` is the source of truth; [references/Docke
 
 10. **Secrets never go in an `ARG`, `ENV` or `COPY`.** They'd stay in the image history. Use a BuildKit secret mount, which exists only for that `RUN`:
     ```dockerfile
-    RUN --mount=type=secret,id=npm_token,env=NPM_TOKEN pnpm fetch   # private registry
+    RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm fetch   # private registry: the .npmrc exists only for this RUN
     ```
     The template's build step already declares the optional `next_server_actions_key` secret this way.
 

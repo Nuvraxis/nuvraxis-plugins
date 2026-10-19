@@ -70,7 +70,7 @@ tag vX.Y.Z ────► release.yaml  same image retagged :vX.Y.Z, :latest ·
 ## Verify
 
 ```sh
-docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest     # lint all workflows
+docker run --rm -v <absolute-repo-path>:/repo -w /repo rhysd/actionlint:1.7.12   # lint all workflows
 gh workflow list && gh run list --limit 5
 gh run view <run-id> --log-failed
 ```
