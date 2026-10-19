@@ -1,0 +1,11 @@
+# Keeps the SHA-pinned actions in .github/workflows current: one PR a week with the new
+# commit SHA and the version comment updated together.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
