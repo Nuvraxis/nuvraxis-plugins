@@ -1,0 +1,21 @@
+# Merged into values.yaml under `db:` by the fullstack scaffold. Frontend values are untouched.
+
+# An existing Secret with a DATABASE_URL key, created outside the chart (External Secrets,
+# Sealed Secrets, or by hand). Empty means "<release fullname>-db". The chart only references
+# it: the Deployment and the migrate Job load it with envFrom. It must exist before the first
+# sync, or the migrate pod stays in CreateContainerConfigError and the sync never starts.
+externalSecret:
+  name: ""
+
+migrate:
+  # Run committed migrations as an Argo CD PreSync Job on every sync.
+  enabled: true
+  # The bundled runner in the app image (see Dockerfile.patch.md). It exits non-zero on failure,
+  # which fails the sync before the new Deployment is applied.
+  command: ["node", "packages/db/dist/migrate.mjs"]
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi

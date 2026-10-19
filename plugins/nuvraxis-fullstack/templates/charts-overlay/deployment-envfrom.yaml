@@ -1,0 +1,4 @@
+            {{- if ne (include "app.dbSecretName" .) .Values.existingSecret }}
+            - secretRef:
+                name: {{ include "app.dbSecretName" . }}
+            {{- end }}
