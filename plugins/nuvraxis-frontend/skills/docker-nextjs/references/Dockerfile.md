@@ -125,16 +125,20 @@ build-args: |
 
 ## A private npm registry
 
-Add the token as a secret mount on the `fetch` step and an `.npmrc` with only the registry and `${NPM_TOKEN}` auth line (pnpm reads auth from `.npmrc`):
+Mount the registry's `.npmrc` (registry URL plus auth line) as a BuildKit secret file on the `deps` step. It exists only while that `RUN` executes and never lands in a layer or in the image history; pnpm reads auth from it.
 
 ```dockerfile
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    --mount=type=secret,id=npm_token,env=NPM_TOKEN \
+    --mount=type=secret,id=npmrc,target=/root/.npmrc \
     pnpm fetch && pnpm install --frozen-lockfile --offline
 ```
+
+In the workflows, pass the file's contents from a repository secret holding the whole `.npmrc`:
 
 ```yaml
 # build-push-action
 secrets: |
-  npm_token=${{ secrets.NPM_TOKEN }}
+  npmrc=${{ secrets.NPMRC }}
 ```
+
+Locally: `docker build --secret id=npmrc,src=<path to your .npmrc> …`. Never `COPY` an `.npmrc` and never pass a token as a build arg.

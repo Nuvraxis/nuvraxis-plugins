@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Checks the plugin's own skills against the authoring standard, and that every template file
-// embedded in a skill is byte-for-byte the file in templates/.
+// Checks every plugin's own skills against the authoring standard, and that every template file
+// embedded in a skill is byte-for-byte the file in that plugin's templates/.
 //
 //   pnpm check
 //
@@ -12,15 +12,14 @@
 // In any Markdown file of an own skill, a line `<!-- template: <path> -->` followed by a fenced
 // block means the block must equal templates/<path>.
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PLUGIN = join(ROOT, "plugins", "nuvraxis-frontend");
-const SKILLS = join(PLUGIN, "skills");
-const TEMPLATES = join(PLUGIN, "templates");
+const PLUGINS = join(ROOT, "plugins");
 const MAX_LINES = 300;
+const FIX = process.argv.includes("--fix");
 
 const problems = [];
 const report = (file, message) => problems.push(`${relative(ROOT, file).replaceAll("\\", "/")}: ${message}`);
@@ -101,7 +100,7 @@ function checkEvals(skillDir) {
 	}
 }
 
-function checkMarkdown(file) {
+function checkMarkdown(file, templates) {
 	const text = read(file);
 	// Relative links, ignoring URLs, anchors and ${...} placeholders.
 	for (const [, target] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
@@ -109,35 +108,65 @@ function checkMarkdown(file) {
 		const path = resolve(dirname(file), target.split("#")[0]);
 		if (!existsSync(path)) report(file, `broken link to ${target}`);
 	}
-	// Embedded templates.
-	const embedded = /<!-- template: (\S+) -->\n```[^\n]*\n([\s\S]*?)\n```(?:\n|$)/g;
-	for (const [, templatePath, block] of text.matchAll(embedded)) {
-		const source = join(TEMPLATES, ...templatePath.split("/"));
+	// Embedded templates. With --fix, a drifted copy is rewritten from the template instead.
+	// The block runs to the first fence at the start of a line, so an empty block can't swallow
+	// the rest of the file. `body` is the block's lines, each ending in "\n" ("" when empty).
+	const embedded = /(<!-- template: (\S+) -->\n```[^\n]*\n)((?:(?!```)[^\n]*\n)*?)(```)(?=\n|$)/g;
+	const expected = (source) => {
+		const content = read(source).replace(/\n$/, "");
+		return content.length > 0 ? `${content}\n` : "";
+	};
+	let fixed = text;
+	const markers = (text.match(/<!-- template: \S+ -->/g) ?? []).length;
+	const matched = [...text.matchAll(embedded)];
+	if (matched.length !== markers) report(file, `${markers - matched.length} template marker(s) not followed by a fenced block`);
+	for (const [, , templatePath, body] of matched) {
+		const source = join(templates, ...templatePath.split("/"));
 		if (!existsSync(source)) {
 			report(file, `embeds templates/${templatePath}, which doesn't exist`);
 			continue;
 		}
-		if (read(source).replace(/\n$/, "") !== block) {
-			report(file, `embedded copy of templates/${templatePath} has drifted; regenerate it from the template`);
+		if (expected(source) !== body && !FIX) {
+			report(file, `embedded copy of templates/${templatePath} has drifted; run \`pnpm check --fix\``);
+		}
+	}
+	if (FIX) {
+		fixed = text.replace(embedded, (match, head, templatePath, _body, tail) => {
+			const source = join(templates, ...templatePath.split("/"));
+			return existsSync(source) ? head + expected(source) + tail : match;
+		});
+		if (fixed !== text) {
+			writeFileSync(file, fixed);
+			console.log(`fixed embedded templates in ${relative(ROOT, file).replaceAll("\\", "/")}`);
 		}
 	}
 }
 
-const skills = readdirSync(SKILLS).filter((name) => statSync(join(SKILLS, name)).isDirectory());
-const own = skills.filter((name) => !existsSync(join(SKILLS, name, "VENDORED.md")));
-
-for (const name of own) {
-	const dir = join(SKILLS, name);
-	checkSkillFile(dir, name);
-	checkReferences(dir);
-	checkEvals(dir);
-	for (const file of markdownFiles(dir)) checkMarkdown(file);
+const summary = [];
+for (const plugin of readdirSync(PLUGINS).filter((name) => statSync(join(PLUGINS, name)).isDirectory())) {
+	const skillsDir = join(PLUGINS, plugin, "skills");
+	const templates = join(PLUGINS, plugin, "templates");
+	const skills = existsSync(skillsDir)
+		? readdirSync(skillsDir).filter((name) => statSync(join(skillsDir, name)).isDirectory())
+		: [];
+	const own = skills.filter((name) => !existsSync(join(skillsDir, name, "VENDORED.md")));
+	for (const name of own) {
+		const dir = join(skillsDir, name);
+		checkSkillFile(dir, name);
+		checkReferences(dir);
+		checkEvals(dir);
+		for (const file of markdownFiles(dir)) checkMarkdown(file, templates);
+	}
+	// Markdown shipped in templates (CLAUDE.md, patch instructions) may embed templates too.
+	if (existsSync(templates)) {
+		for (const file of markdownFiles(templates)) checkMarkdown(file, templates);
+	}
+	summary.push(`${plugin}: ${own.length} own, ${skills.length - own.length} vendored`);
 }
-checkMarkdown(join(TEMPLATES, "CLAUDE.md"));
 
 if (problems.length > 0) {
 	console.error(problems.map((p) => `✗ ${p}`).join("\n"));
-	console.error(`\n${problems.length} problem(s) in ${own.length} own skills.`);
+	console.error(`\n${problems.length} problem(s). ${summary.join("; ")}.`);
 	process.exit(1);
 }
-console.log(`✓ ${own.length} own skills meet the standard; embedded templates match (vendored: ${skills.length - own.length}).`);
+console.log(`✓ Own skills meet the standard; embedded templates match. ${summary.join("; ")}.`);

@@ -19,7 +19,7 @@ The template's file:
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": []
     },
     "dev": {
       "cache": false,
@@ -36,6 +36,7 @@ The template's file:
 | `env` for build | Inlined at build: `NEXT_PUBLIC_*`, the deployment id, the optional Server Actions key. A change must produce a new cache entry. The secret is only hashed, never stored. |
 | `passThroughEnv` | Available to the task, not part of the hash. |
 | `typecheck` `outputs: []` | Nothing to restore; a cache hit just skips the run. |
+| `test` `outputs: []` | Tests write no files by default. A package whose test script writes coverage adds `"coverage/**"` in its own `turbo.json` (package configuration), so turbo doesn't warn about missing outputs elsewhere. |
 | `dev` | Never cached, long-running. |
 
 No `globalDependencies`: the shared tsconfig is a workspace package, so a change to it already invalidates every dependent through the package graph.

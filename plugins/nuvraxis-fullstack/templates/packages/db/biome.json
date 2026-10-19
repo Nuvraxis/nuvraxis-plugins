@@ -1,0 +1,13 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "extends": "//",
+  "files": {
+    "includes": ["**", "!!drizzle"]
+  },
+  "overrides": [
+    {
+      "includes": ["src/migrate.ts", "src/seed.ts"],
+      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+    }
+  ]
+}

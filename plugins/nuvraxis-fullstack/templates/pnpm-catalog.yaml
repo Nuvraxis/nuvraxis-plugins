@@ -1,0 +1,24 @@
+# Merged into the app's pnpm-workspace.yaml by /nuvraxis-fullstack:scaffold-fullstack:
+# the catalog entries are added under `catalog:`, the allowBuilds entries under `allowBuilds:`.
+#
+# drizzle-kit's version here also selects the official drizzle-kit skills this plugin vendors
+# (scripts/sync-upstream.mjs reads it), so the two can't drift apart. Change it here, then run
+# `pnpm sync` in the plugin repository.
+catalog:
+  "@electric-sql/pglite": 0.4.6
+  "@types/pg": 8.23.1
+  drizzle-kit: 1.0.0-rc.4
+  drizzle-orm: 1.0.0-rc.4
+  esbuild: 0.28.2
+  pg: 8.23.1
+  vitest: 5.0.5
+
+allowBuilds:
+  # esbuild's install script links its platform binary; drizzle-kit and the migrate bundle need it.
+  esbuild: true
+
+permissions:
+  # drizzle-kit asks pnpm to install its agent skills into the project. The nuvraxis-fullstack
+  # plugin already ships the same skills at the same version, so a second copy is denied.
+  drizzle-kit:
+    skills: false

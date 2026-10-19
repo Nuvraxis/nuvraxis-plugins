@@ -75,8 +75,9 @@ Neither is the default. Decide per app and write the reason in the app's `CLAUDE
 ## Checking it
 
 ```sh
-curl -sI http://localhost:3000/ | grep -i content-security-policy
-curl -s  http://localhost:3000/ | grep -o 'nonce="[^"]*"' | sort -u   # one value, on every script
+curl -s -D headers.txt -o page.html http://localhost:3000/
+grep -i content-security-policy headers.txt
+grep -o 'nonce="[^"]*"' page.html | sort -u   # one value, on every script
 ```
 
 In the browser, the console reports every blocked resource as a CSP violation. Load each main screen once with DevTools open after changing the policy.

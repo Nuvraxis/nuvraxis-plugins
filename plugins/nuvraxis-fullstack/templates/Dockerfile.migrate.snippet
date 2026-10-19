@@ -1,0 +1,3 @@
+# nuvraxis-fullstack: the migrate Job's runner (one bundled file) and the SQL migrations it applies.
+COPY --from=builder /repo/packages/db/dist/migrate.mjs ./packages/db/dist/migrate.mjs
+COPY --from=builder /repo/packages/db/drizzle ./packages/db/drizzle

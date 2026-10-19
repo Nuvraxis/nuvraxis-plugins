@@ -87,8 +87,9 @@ Use whenever code crosses a trust boundary in a Next.js app: a Server Action, a 
 pnpm typecheck && pnpm lint && pnpm build
 pnpm audit --audit-level high
 pnpm --filter <app> start &
-curl -sI localhost:3000/ | grep -iE "content-security-policy|strict-transport|x-content-type|referrer-policy"
-curl -s localhost:3000/ | grep -o 'nonce="[^"]*"' | head -3   # every script carries the nonce
+curl -s -D headers.txt -o page.html http://localhost:3000/
+grep -iE "content-security-policy|strict-transport|x-content-type|referrer-policy" headers.txt
+grep -o 'nonce="[^"]*"' page.html | sort -u   # one value, on every script
 ```
 
 Then a manual pass: for each `"use server"` export and each `route.ts` method, confirm the four steps of rule 1 are present.

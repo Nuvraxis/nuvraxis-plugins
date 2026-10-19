@@ -1,0 +1,6 @@
+
+Database: migrations run as the PreSync Job {{ include "app.fullname" . }}-migrate before each sync.
+  The Secret "{{ include "app.dbSecretName" . }}" with DATABASE_URL must exist before the first sync.
+  If it doesn't, the migrate pod stays in CreateContainerConfigError and the sync never starts:
+    kubectl -n {{ .Release.Namespace }} get secret {{ include "app.dbSecretName" . }}
+    kubectl -n {{ .Release.Namespace }} logs job/{{ include "app.fullname" . }}-migrate

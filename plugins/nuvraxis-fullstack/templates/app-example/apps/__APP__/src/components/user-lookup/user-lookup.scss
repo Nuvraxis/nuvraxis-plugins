@@ -1,0 +1,17 @@
+@use "abstracts" as a;
+
+.user-lookup {
+  display: grid;
+  gap: a.space(3);
+  max-inline-size: 28rem;
+
+  &__submit {
+    justify-self: start;
+  }
+
+  &__result {
+    margin: 0;
+    color: var(--color-muted-foreground);
+    font-size: var(--text-sm);
+  }
+}

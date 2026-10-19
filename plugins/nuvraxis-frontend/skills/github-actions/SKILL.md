@@ -1,7 +1,7 @@
 ---
 name: github-actions
 description: >-
-  GitHub Actions conventions for Nuvraxis Next.js apps — exactly three workflows: pr.yaml (every PR to any branch: Biome, stylelint, typecheck/test/build with turbo --affected, Docker build + health check, helm lint + kubeconform; publishes nothing), main.yaml (push to main: one multi-arch image to GHCR tagged sha-SHORTSHA and main, provenance + SBOM, gha cache), release.yaml (tag vX.Y.Z: verify on main, retag the existing image without rebuilding, package and push the Helm chart to OCI, GitHub Release with chart, digest and SBOM). Minimal permissions per job, GITHUB_TOKEN only, pinned action majors. Use when editing .github/workflows/*, adding a CI step, or debugging a failed run or release.
+  GitHub Actions conventions for Nuvraxis Next.js apps — exactly three workflows: pr.yaml (every PR to any branch: Biome, stylelint, typecheck/test/build with turbo --affected, Docker build + health check, helm lint + kubeconform; publishes nothing), main.yaml (push to main: one multi-arch image to GHCR tagged sha-SHORTSHA and main, provenance + SBOM, gha cache), release.yaml (tag vX.Y.Z: verify on main, retag the existing image without rebuilding, package and push the Helm chart to OCI, GitHub Release with chart, digest and SBOM). Minimal permissions per job, GITHUB_TOKEN only, every action pinned to a commit SHA with Dependabot bumping it. Use when editing .github/workflows/*, adding a CI step, or debugging a failed run or release.
 when_to_use: >-
   "add a CI check", "the release failed", "image not found for this commit", "set up CI/CD", "publish the chart", "why did CI run on draft", "speed up CI", "pin actions".
 ---
@@ -22,7 +22,8 @@ tag vX.Y.Z ────► release.yaml  same image retagged :vX.Y.Z, :latest ·
 
 2. **`GITHUB_TOKEN` only.** GHCR login uses `${{ github.actor }}` / `${{ secrets.GITHUB_TOKEN }}`; `gh` uses `GH_TOKEN: ${{ github.token }}`. No personal access tokens in CI. (Pulling private packages from the cluster is a different credential; see `helm-nextjs`.)
 
-3. **Pin action majors (`@v7`) and keep the SHA table current.** The template uses major tags for readability. If the org requires SHA pinning, replace each `@vN` with the SHA from [references/action-pins.md](references/action-pins.md) and keep the `# vN.M.P` comment. Current majors: checkout v7, setup-node v7, pnpm/action-setup v6, setup-qemu v4, setup-buildx v4, login v4, metadata v6, build-push v7, azure/setup-helm v5.
+3. **Pin every `uses:` to a full commit SHA, with the release as a comment, and let Dependabot bump it.**
+   `uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`. A tag can be moved by whoever controls the action; a SHA can't, and `main.yaml`/`release.yaml` hold `packages: write` and the `GITHUB_TOKEN`. `.github/dependabot.yml` (github-actions, weekly, grouped) keeps the pins fresh. Never `@main` or a bare `@v7`. Current pins and how to resolve one: [references/pins.md](references/pins.md).
 
 4. **Toolchain: `pnpm/action-setup` before `actions/setup-node`.** action-setup reads the pnpm version from `packageManager`; setup-node reads `.node-version` and caches the pnpm store (`cache: pnpm` needs pnpm on PATH first). Then `pnpm install --frozen-lockfile`. Never `npm ci`.
 
@@ -69,7 +70,7 @@ tag vX.Y.Z ────► release.yaml  same image retagged :vX.Y.Z, :latest ·
 ## Verify
 
 ```sh
-docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest     # lint all workflows
+docker run --rm -v <absolute-repo-path>:/repo -w /repo rhysd/actionlint:1.7.12   # lint all workflows
 gh workflow list && gh run list --limit 5
 gh run view <run-id> --log-failed
 ```

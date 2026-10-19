@@ -1,0 +1,49 @@
+{
+  "about": "Tasks to try the skill on, in the same shape as the vendored nuvui evals: a one-line prompt, the packages installed, and regular expressions for what the written files should and shouldn't contain. A match is a first look only; the result still has to pass `pnpm typecheck`, `pnpm --filter @repo/db test` and `pnpm build`.",
+  "evals": [
+    {
+      "id": "list-admins-in-app",
+      "prompt": "On the admin page, show the list of admin users.",
+      "project": ["next", "@repo/db", "drizzle-orm@1.0.0-rc.4"],
+      "expect": [
+        { "pattern": "packages/db/src/queries/users\\.ts", "why": "The query lives in the db package's query file." },
+        { "pattern": "\\(db: Executor", "why": "The query function takes the executor first." },
+        { "pattern": "from \"@repo/db\"", "why": "The app imports from the package's public surface." },
+        { "pattern": "\\.test\\.ts", "why": "The new query function gets a test." },
+        { "pattern": "limit", "why": "A list always has a limit." }
+      ],
+      "reject": [
+        { "pattern": "apps/[^\\n]*from \"drizzle-orm", "why": "Apps never import drizzle-orm." },
+        { "pattern": "from \"@repo/db/schema\"[\\s\\S]*apps/", "why": "Apps don't import tables." },
+        { "pattern": "new Pool\\(", "why": "Only client.ts creates a pool." }
+      ]
+    },
+    {
+      "id": "team-invite-rules",
+      "prompt": "Only team owners may invite members, and a team can have at most 20 members. Add an inviteMember function.",
+      "project": ["next", "@repo/db"],
+      "expect": [
+        { "pattern": "apps/[^\\s]*/src/server/|src/server/", "why": "The rules live in the app's server code, not the db package." },
+        { "pattern": "transaction\\(", "why": "Counting and inserting happen in one transaction." },
+        { "pattern": "\\(tx", "why": "Query functions are called with tx inside the transaction." }
+      ],
+      "reject": [
+        { "pattern": "packages/db/src/queries/[^\\n]*\\n[\\s\\S]*(owner|role)\\s*!==", "why": "Authorisation inside the db package." },
+        { "pattern": "isolatedDeclarations\": true", "why": "isolatedDeclarations stays off in packages/db." }
+      ]
+    },
+    {
+      "id": "fix-isolated-declarations",
+      "prompt": "Our base tsconfig has isolatedDeclarations but packages/db turns it off. Make packages/db consistent with the rest.",
+      "project": ["typescript@7", "drizzle-orm@1.0.0-rc.4"],
+      "ask": "Explain that it's a deliberate exception (inferred table/relation/schema types) and confirm before changing anything.",
+      "expect": [
+        { "pattern": "inferred|can't be written by hand|exception", "why": "The reason for the exception is given." }
+      ],
+      "reject": [
+        { "pattern": ": any\\b|as any", "why": "Annotating tables with any to satisfy the flag loses every type." },
+        { "pattern": "\"isolatedDeclarations\": true", "why": "Turning it on breaks every Drizzle declaration." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{{- if .Values.db.migrate.enabled }}
+# Runs the app's committed migrations before Argo CD applies the new Deployment.
+# Same image and tag as the Deployment; no drizzle-kit in the image, only the bundled runner.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # A fixed name: with BeforeHookCreation, the next sync deletes this Job and creates it again.
+  name: {{ include "app.fullname" . }}-migrate
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  # Drizzle takes no migration lock: exactly one runner, tried at most twice, ten minutes max.
+  parallelism: 1
+  completions: 1
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        # Not the app's selector labels: the Service and PDB must never select this pod.
+        app.kubernetes.io/name: {{ include "app.name" . }}-migrate
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "app.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "app.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.db.migrate.command | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ include "app.dbSecretName" . }}
+          resources:
+            {{- toYaml .Values.db.migrate.resources | nindent 12 }}
+{{- end }}

@@ -1,0 +1,36 @@
+{
+  "name": "@__SCOPE__/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "scripts": {
+    "build": "esbuild src/migrate.ts src/seed.ts --bundle --platform=node --format=esm --target=node26 --outdir=dist --out-extension:.js=.mjs --external:pg-native --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
+    "db:migrate": "pnpm run build && node --env-file-if-exists=../../.env dist/migrate.mjs",
+    "db:seed": "pnpm run build && node --env-file-if-exists=../../.env dist/seed.mjs",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "drizzle-orm": "catalog:",
+    "pg": "catalog:",
+    "server-only": "catalog:",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@__SCOPE__/tsconfig": "workspace:*",
+    "@electric-sql/pglite": "catalog:",
+    "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "drizzle-kit": "catalog:",
+    "esbuild": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

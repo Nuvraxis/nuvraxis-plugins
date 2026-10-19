@@ -1,6 +1,6 @@
 {
   "name": "nuvraxis-frontend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Production conventions for Next.js apps at Nuvraxis: TypeScript 7, Next.js App Router, Biome, SCSS + BEM, nuvui, pnpm + Turborepo, and delivery via Docker → GHCR → Helm → ArgoCD with GitHub Actions. Includes a scaffold command and the nuvui MCP server.",
   "author": {
     "name": "Nuvraxis",
@@ -10,6 +10,7 @@
   "homepage": "https://github.com/Nuvraxis/nuvraxis-plugins",
   "repository": "https://github.com/Nuvraxis/nuvraxis-plugins",
   "license": "MIT",
+  "privacyPolicyUrl": "https://github.com/Nuvraxis/nuvraxis-plugins/blob/main/PRIVACY.md",
   "keywords": [
     "nextjs",
     "typescript",
