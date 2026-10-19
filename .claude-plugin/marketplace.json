@@ -9,7 +9,13 @@
     {
       "name": "nuvraxis-frontend",
       "source": "./plugins/nuvraxis-frontend",
-      "description": "Skills, templates and the nuvui MCP for Next.js apps in a pnpm + Turborepo monorepo, shipped as Docker images and Helm charts.",
+      "description": "Skills, templates and the nuvui MCP for Next.js apps in a pnpm + Turborepo monorepo, shipped as Docker images and Helm charts. Install nuvraxis-fullstack as well to add a PostgreSQL data layer.",
+      "category": "development"
+    },
+    {
+      "name": "nuvraxis-fullstack",
+      "source": "./plugins/nuvraxis-fullstack",
+      "description": "Drizzle ORM + PostgreSQL for nuvraxis-frontend apps: packages/db, migrations as an Argo CD PreSync Job, local Postgres and CI. Expects nuvraxis-frontend to be installed too (plugins have no dependency mechanism, so its scaffold checks for a frontend scaffold first).",
       "category": "development"
     }
   ]

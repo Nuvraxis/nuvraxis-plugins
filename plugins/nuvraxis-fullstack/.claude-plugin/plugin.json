@@ -1,0 +1,23 @@
+{
+  "name": "nuvraxis-fullstack",
+  "version": "0.1.0",
+  "description": "Adds a PostgreSQL data layer to a nuvraxis-frontend app: Drizzle ORM v1 in a packages/db workspace package, valibot validation at the edges, migrations as an Argo CD PreSync Job, local Postgres with Docker Compose, and CI against a Postgres service. Requires the nuvraxis-frontend plugin.",
+  "author": {
+    "name": "Nuvraxis",
+    "email": "hello@nuvraxis.com",
+    "url": "https://github.com/Nuvraxis"
+  },
+  "homepage": "https://github.com/Nuvraxis/nuvraxis-plugins",
+  "repository": "https://github.com/Nuvraxis/nuvraxis-plugins",
+  "license": "MIT",
+  "keywords": [
+    "drizzle",
+    "postgres",
+    "postgresql",
+    "nextjs",
+    "fullstack",
+    "migrations",
+    "argocd",
+    "valibot"
+  ]
+}

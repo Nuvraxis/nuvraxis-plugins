@@ -7,6 +7,6 @@
   "scripts": {
     "sync": "node scripts/sync-upstream.mjs",
     "check": "node scripts/check-skills.mjs",
-    "validate": "claude plugin validate ./plugins/nuvraxis-frontend --strict && claude plugin validate . --strict"
+    "validate": "claude plugin validate ./plugins/nuvraxis-frontend --strict && claude plugin validate ./plugins/nuvraxis-fullstack --strict && claude plugin validate . --strict"
   }
 }
