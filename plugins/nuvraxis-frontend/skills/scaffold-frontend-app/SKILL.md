@@ -58,7 +58,7 @@ If pnpm stops on `ERR_PNPM_IGNORED_BUILDS`, a dependency's install script needs 
 
 ## 5. Before writing any UI
 
-The home page is a placeholder. If the user asked for screens in the same request, call the nuvui MCP `get_rules` first, then `list_blocks` / `get_page` for what you'll use, and follow the `nuvui`, `scss-bem` and `nextjs-production` skills. Don't add UI the user didn't ask for.
+The home page is a placeholder. If the user asked for screens in the same request, first read nuvui through its MCP, in the order the [nextjs-production](../nextjs-production/SKILL.md) checklist gives ("Before writing any UI"): `get_rules`, `get_changes`, `list_components`, `list_blocks` / `list_charts`, `list_guides`, `get_page` for every component and guide you'll use, `get_tokens`. Then follow the `nuvui`, `scss-bem` and `nextjs-production` skills. Don't add UI the user didn't ask for.
 
 ## 6. Prove it
 

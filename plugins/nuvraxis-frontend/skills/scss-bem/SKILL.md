@@ -11,6 +11,8 @@ when_to_use: >-
 Use when writing or reviewing the app's own styles: the layout around nuvui components, screens, and blocks.
 Don't use for restyling a nuvui component's internals (that's props and `--nuv-*` variables, see the `nuvui` skill, `rules/styling.md`) or for Tailwind projects.
 
+Before writing a stylesheet, read nuvui first: the full checklist is in [nextjs-production](../nextjs-production/SKILL.md) under "Before writing any UI". For styles in particular: `get_rules` with topic `styling`, `get_page` for each component the block wraps (its CSS variables and classes), the block or chart you're starting from (`get_block` / `get_chart`), and `get_tokens` for every value.
+
 Biome does not lint SCSS. stylelint does, with `stylelint-config-standard-scss` and the BEM pattern in [references/stylelint.md](references/stylelint.md). The template ships `stylelint.config.mjs` at the repo root.
 
 ## Rules

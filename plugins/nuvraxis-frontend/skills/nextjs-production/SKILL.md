@@ -12,6 +12,21 @@ Use for any code in a Next.js 16 App Router app. Security-specific rules (auth i
 
 Baseline: Next 16.4, React 19.3, Turbopack (default for `dev` and `build`), `cacheComponents: true` with `partialPrefetching: true`, `output: "standalone"`, `typedRoutes: true`. The template's `next.config.ts` is the source of truth.
 
+## Before writing any UI: read nuvui first
+
+Every page, component and stylesheet in these apps is built on nuvui. Never write nuvui code from memory: props, parts, blocks and tokens change between releases. Before the first line of UI, read the library through the nuvui MCP, in this order, passing the `@nuvui/react` version from the app's `package.json` as `version`:
+
+1. **The app's `package.json`**: which `@nuvui/*` packages are installed, and at which versions.
+2. **`get_rules`** without a topic, then with each topic the work touches (`forms`, `composition`, `styling`, `server-components`, `accessibility`, `text-and-direction`, `packages`).
+3. **`get_changes`** with the installed `@nuvui/*` entries: what was added or changed since those versions.
+4. **`list_components`** across every package, so you know what exists, add-on packages included, before writing anything of your own.
+5. **`list_blocks`**, and **`list_charts`** for any chart. When one fits, **`get_block`** / **`get_chart`** and start from it.
+6. **`list_guides`**, then **`get_page`** for each guide that applies (forms, theming, SCSS, CSP, translation, right to left, recipes).
+7. **`get_page`** for every component you will use: the whole page (parts, props, examples, CSS variables, accessibility), not only Props. **`search_docs`** for anything you can't place.
+8. **`get_tokens`** before writing any CSS value.
+
+Only then write code. If the MCP isn't connected, read the same things from the vendored `nuvui` skill ([SKILL.md](../nuvui/SKILL.md), [reference.md](../nuvui/reference.md), [blocks.md](../nuvui/blocks.md), [recipes.md](../nuvui/recipes.md), [tokens.md](../nuvui/tokens.md), `rules/`), and say that you did, because it can be behind the latest release.
+
 ## Rules
 
 1. **Server Components by default; `"use client"` only for state, effects, browser APIs or event handlers.**
