@@ -8,10 +8,24 @@ Next.js 16 app in a pnpm + Turborepo monorepo, built on nuvui, shipped as a Dock
 - **Node 26**, the exact version in `.node-version`. The Dockerfile base and CI use the same version.
 - **Biome formats and lints** everything except SCSS. Don't add ESLint or Prettier. A plugin hook runs `biome check --write` on each file Claude edits.
 - **SCSS is BEM + nuvui tokens, linted by stylelint.** One block per file beside its component, global (not `.module.scss`), `@use` never `@import`, every color a token, no `!important`, never select a `nuv-` class.
-- **This app uses nuvui.** Call the nuvui MCP `get_rules` before writing any UI, and `get_page` for a component before using it. Change a component's look by prop → `--nuv-*` variable → token. Blocks: `pnpm dlx shadcn@latest add https://nuvui.nuvraxis.com/r/<name>.json`.
+- **This app uses nuvui. Read it before writing any UI** (see below). Change a component's look by prop → `--nuv-*` variable → token. Blocks: `pnpm dlx shadcn@latest add https://nuvui.nuvraxis.com/r/<name>.json`.
 - **Server Components by default.** `"use client"` only on the leaf that needs state, effects or handlers.
 - **Every Server Action and route handler** authenticates, validates input with valibot, and authorises against the resource itself.
 - **Config:** `NEXT_PUBLIC_*` is baked in at build and identical in every environment. Everything per-environment is a runtime env var read on the server through `src/env.ts`.
+
+## Before writing any UI: read nuvui first
+
+Never write nuvui code from memory. Before the first line of a page, component or stylesheet, read the library through the nuvui MCP (`.mcp.json`), passing the `@nuvui/react` version from `apps/__APP__/package.json` as `version`:
+
+1. `get_rules`, then `get_rules` with each topic the work touches.
+2. `get_changes` with the installed `@nuvui/*` versions.
+3. `list_components` across every package, add-ons included.
+4. `list_blocks`, and `list_charts` for any chart; `get_block` / `get_chart` for one that fits, and start from it.
+5. `list_guides`, and `get_page` for each guide that applies.
+6. `get_page` for every component you'll use, the whole page; `search_docs` for anything you can't place.
+7. `get_tokens` before writing any CSS value.
+
+If the MCP isn't connected, read the same from the `nuvraxis-frontend:nuvui` skill and say so.
 
 ## Commands
 
