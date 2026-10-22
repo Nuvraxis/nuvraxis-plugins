@@ -4,15 +4,15 @@
 			"plugin": "nuvraxis-frontend",
 			"repo": "Nuvraxis/nuvui",
 			"path": "skills/nuvui",
-			"commit": "e37e2d47468b0a67b6b85822a6f8bf4c7c856c9d",
-			"date": "2026-10-18T07:37:51+02:00"
+			"commit": "acc013c1038402e17d8185d3e0c8b712892c3476",
+			"date": "2026-10-21T18:31:56+02:00"
 		},
 		"turborepo": {
 			"plugin": "nuvraxis-frontend",
 			"repo": "vercel/turborepo",
 			"path": "skills/turborepo",
-			"commit": "3962b47523dee19de217cbbe2bf81522416f7ed3",
-			"date": "2026-10-18T18:30:33-06:00"
+			"commit": "8237e034a407cadc65bbd734ca774394b6d851e3",
+			"date": "2026-10-21T13:19:49Z"
 		}
 	},
 	"packages": {

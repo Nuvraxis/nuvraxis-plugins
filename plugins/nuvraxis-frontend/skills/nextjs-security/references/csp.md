@@ -25,7 +25,7 @@ frame-ancestors 'none'
 | `style-src 'self' 'nonce-…'` | The app's and nuvui's stylesheets, plus nuvui `ScrollArea`'s one `<style>` element, which takes the nonce. |
 | `style-src-attr 'unsafe-inline'` | nuvui (and Radix, Recharts) set `style` attributes during server rendering: progress width, slider position, chart colors. Without it they're dropped. A `style` attribute can't select other elements, so it can't exfiltrate page content. |
 | `img-src blob: data:` | `blob:` for nuvui previews and QR/barcode PNG export; `data:` for small inline images and `next/image` blur placeholders. |
-| `worker-src blob:` | `@nuvui/map` starts MapLibre's worker from a blob. Drop it if the app has no map. |
+| `worker-src blob:` | `@nuvui/map` starts MapLibre's worker from a blob, and so does hls.js for `@nuvui/media` streams. Drop it if the app has neither. |
 | `object-src 'none'`, `base-uri 'self'` | Close two classic injection paths. |
 | `form-action 'self'` | Forms (and Server Actions) post only to this origin. |
 | `frame-ancestors 'none'` | No one can frame the app (clickjacking). Replaces `X-Frame-Options`. |
@@ -39,6 +39,10 @@ In development the proxy adds `'unsafe-eval'` to `script-src` (React's dev tooli
 | API calls from the browser to `api.example.com` | `connect-src 'self' https://api.example.com` |
 | Map tiles from a provider | its host in `connect-src` and `img-src` |
 | Images from a CDN | its host in `img-src` (and `images.remotePatterns`) |
+| Video or audio files with `@nuvui/media` | none from this origin (`default-src 'self'` covers it); from a CDN, `media-src 'self' https://cdn.example.com`, and its host in `img-src` for a thumbnails picture |
+| HLS or DASH streams with `@nuvui/media` | add `blob:` to `media-src`; keep `worker-src blob:` for hls.js, or pass `hlsConfig={{ enableWorker: false }}` |
+| `computePeaks` on a file from elsewhere | that file's host in `connect-src` |
+| `@nuvui/backgrounds`, `@nuvui/flow` | nothing |
 | A third-party script | load it with `next/script` and `nonce={nonce}`; `strict-dynamic` covers what it loads |
 | Embedding in your own other app | `frame-ancestors https://admin.example.com` |
 

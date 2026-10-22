@@ -124,6 +124,7 @@ Biome does not lint SCSS. stylelint does, with `stylelint-config-standard-scss` 
     `margin-inline-start`, `padding-block`, `inline-size`, `inset-inline-end` instead of left/right/width, so right-to-left pages mirror. Interactive elements get `@include nuv.touch-target`.
 
 14. **Animate only inside `nuv.motion-safe`**, with nuvui's duration and easing tokens (`var(--nuv-duration-fast) var(--ease-out)`).
+    This is for your own animations. nuvui's moving parts (`@nuvui/backgrounds`, `ScrollProgress`, `CodeBlock` with `typing`) already handle less motion, forced colors and hidden tabs themselves: don't wrap them in a media query, and recolor a background through its `--nuv-*` variables, not props.
 
 15. **No IDs, no type-qualified classes, no `!important`.**
     `#header`, `div.card` and `!important` all raise specificity in ways BEM exists to avoid. stylelint enforces all three.

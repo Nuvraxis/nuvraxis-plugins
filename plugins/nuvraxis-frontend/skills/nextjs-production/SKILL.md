@@ -107,7 +107,7 @@ Only then write code. If the MCP isn't connected, read the same things from the 
 
 17. **Images through `next/image`, fonts through `next/font`.** `sharp` comes with Next for the optimiser; the runner image needs no extra package. Remote images need `images.remotePatterns` with an exact hostname.
 
-18. **Check bundle size with `pnpm next analyze`** (Turbopack's analyzer; `@next/bundle-analyzer` is webpack-only). Lazy-load heavy client widgets (nuvui editor, maps, charts below the fold) with `next/dynamic`.
+18. **Check bundle size with `pnpm next analyze`** (Turbopack's analyzer; `@next/bundle-analyzer` is webpack-only). Lazy-load heavy client widgets (nuvui editor, maps, charts below the fold) with `next/dynamic`. `@nuvui/media` already loads hls.js or dashjs only when a stream plays, through the `hls={() => import("hls.js")}` prop: don't import them at the top of a file.
 
 19. **Use typed routes and generated types.** `typedRoutes: true` checks `<Link href>`; `PageProps<"/invoices/[id]">` and `LayoutProps` are global after `next typegen` (run automatically by `next dev`/`next build`). Don't hand-write `params` types.
 
