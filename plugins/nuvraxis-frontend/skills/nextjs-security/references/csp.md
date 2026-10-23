@@ -42,11 +42,27 @@ In development the proxy adds `'unsafe-eval'` to `script-src` (React's dev tooli
 | Video or audio files with `@nuvui/media` | none from this origin (`default-src 'self'` covers it); from a CDN, `media-src 'self' https://cdn.example.com`, and its host in `img-src` for a thumbnails picture |
 | HLS or DASH streams with `@nuvui/media` | add `blob:` to `media-src`; keep `worker-src blob:` for hls.js, or pass `hlsConfig={{ enableWorker: false }}` |
 | `computePeaks` on a file from elsewhere | that file's host in `connect-src` |
+| 3D models with `@nuvui/3d` from this origin | nothing (`connect-src 'self'` covers the fetch); from a CDN, its host in `connect-src` |
+| `@nuvui/3d` with textures packed in the file, or files the person picks | add `blob:` to `connect-src` (and to `img-src`, already there, for Safari before 17) |
+| `@nuvui/3d` with a glTF that embeds its files as `data:` addresses | add `data:` to `connect-src` |
+| `@nuvui/3d` with Meshopt compression | `'wasm-unsafe-eval'` in `script-src` (below). It allows compiling WebAssembly, not running strings as script |
+| `@nuvui/3d` with KTX2 textures | don't: the transcoder needs `'unsafe-eval'`, which we never allow in production. Re-export with Meshopt |
 | `@nuvui/backgrounds`, `@nuvui/flow` | nothing |
 | A third-party script | load it with `next/script` and `nonce={nonce}`; `strict-dynamic` covers what it loads |
 | Embedding in your own other app | `frame-ancestors https://admin.example.com` |
 
 Add exact hosts. Never `https:` or `*`.
+
+### A directive only some pages need
+
+A policy belongs to the document the browser loaded first. After that, the App Router navigates on the client and the policy doesn't change, so a directive added in `proxy.ts` only for `/models/*` is missing when someone clicks through to a model from the home page, and the viewer fails there but works on reload. So add it to the whole app's policy, and only when the app uses it:
+
+```ts
+// apps/<app>/src/proxy.ts: the app shows Meshopt-compressed models (@nuvui/3d)
+`script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
+```
+
+Write the reason in a comment beside it. Remove it when the last such model goes.
 
 ## The nonce in components
 
