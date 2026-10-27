@@ -105,7 +105,7 @@ Only then write code. If the MCP isn't connected, read the same things from the 
 
 16. **Styles: global BEM SCSS, imported by the component.** Turbopack compiles Sass with the `sass` package; `sassOptions.loadPaths: ["src/styles"]` makes `@use "abstracts"` work from any depth. No `~` imports, no `sassOptions.functions`. Rules in `scss-bem`.
 
-17. **Images through `next/image`, fonts through `next/font`.** `sharp` comes with Next for the optimiser; the runner image needs no extra package. Remote images need `images.remotePatterns` with an exact hostname.
+17. **Images through `next/image`, fonts through `next/font`.** `sharp` comes with Next for the optimiser; the runner image needs no extra package. Remote images need `images.remotePatterns` with an exact hostname. Inside nuvui's `ImageZoom`, the `next/image` is drawn `scale` times larger (2 by default) when zoomed, so set `sizes` to the zoomed width, not the box's, or the optimiser serves too few pixels and the zoom looks soft.
 
 18. **Check bundle size with `pnpm next analyze`** (Turbopack's analyzer; `@next/bundle-analyzer` is webpack-only). Lazy-load heavy client widgets (nuvui editor, maps, charts below the fold) with `next/dynamic`. `@nuvui/media` already loads hls.js or dashjs only when a stream plays, through the `hls={() => import("hls.js")}` prop: don't import them at the top of a file. `@nuvui/3d` loads three when a model is first shown; in a gallery, show `poster` pictures and render a `ModelViewer` only for the model that's opened. It needs React 19 and is ESM only.
 
