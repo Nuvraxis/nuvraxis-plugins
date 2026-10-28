@@ -6,7 +6,7 @@ packages:
 # turbo is pinned in the root package.json instead: the Dockerfile reads it from there.
 catalog:
   "@biomejs/biome": 2.5.15
-  "@nuvui/react": 0.8.0
+  "@nuvui/react": 0.9.0
   "@opentelemetry/api": 1.9.1
   "@opentelemetry/api-logs": 0.223.0
   "@opentelemetry/instrumentation": 0.223.0
