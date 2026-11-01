@@ -75,8 +75,8 @@ packages/db/
 catalog:
   "@electric-sql/pglite": 0.4.6
   "@types/pg": 8.23.1
-  drizzle-kit: 1.0.0-rc.4
-  drizzle-orm: 1.0.0-rc.4
+  drizzle-kit: 1.0.0-rc.5
+  drizzle-orm: 1.0.0-rc.5
   esbuild: 0.28.2
   pg: 8.23.1
   vitest: 5.0.5

@@ -47,6 +47,37 @@ where: { RAW: (t) => sql`lower(${t.email}) = ${email}` }
 orderBy: (t, { desc }) => desc(t.createdAt)
 ```
 
+Since rc.5, related rows are built in a nested query, so raw SQL can't reach a relation's alias (`"comments"."r"`). Order by the relation instead (below). If a query can't be rewritten, `strategy: "basic"` on that query brings the old shape back.
+
+### Filters that may be absent
+
+`undefined` in `where` throws, so a value lost by accident can't turn a filtered query into one that returns every row:
+
+```ts
+import { EmptyFilter } from "drizzle-orm/relations";
+
+// Wrong: throws when role is undefined
+where: { role: input.role }
+
+// Right: optional by design
+where: { role: input.role ?? EmptyFilter }
+```
+
+Don't reach for `EmptyFilter` to silence the error. On a filter that scopes data, such as a tenant id, an absent value is a bug and should fail.
+
+### Filtering and ordering by a relation
+
+```ts
+where: { posts: true }                                  // users with at least one post
+where: { posts: false }                                 // users with none
+where: { posts: { published: true } }                   // users with a published post
+orderBy: { posts: "asc(count)" }                        // by number of posts
+orderBy: { posts: { createdAt: "desc(max)" } }          // by latest post
+orderBy: { author: { isAdmin: "desc" }, createdAt: "desc" }
+```
+
+An empty relation filter (`posts: {}`) is skipped, not an existence check.
+
 ## Select builder
 
 ```ts

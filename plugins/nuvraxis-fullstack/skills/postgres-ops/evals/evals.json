@@ -4,7 +4,7 @@
     {
       "id": "deploy-with-database",
       "prompt": "We're going to production with an RDS Postgres. Set up the chart so the app gets its database URL and migrations run on deploy.",
-      "project": ["helm", "drizzle-orm@1.0.0-rc.4"],
+      "project": ["helm", "drizzle-orm@1.0.0-rc.5"],
       "expect": [
         { "pattern": "externalSecret:\\s*\\n\\s*name:", "why": "The Secret is referenced by name in values." },
         { "pattern": "argocd\\.argoproj\\.io/hook: PreSync", "why": "Migrations run as a PreSync Job." },
@@ -36,7 +36,7 @@
     {
       "id": "undo-bad-migration",
       "prompt": "Yesterday's migration dropped a column we still need in production. Roll it back.",
-      "project": ["drizzle-orm@1.0.0-rc.4", "drizzle-kit@1.0.0-rc.4"],
+      "project": ["drizzle-orm@1.0.0-rc.5", "drizzle-kit@1.0.0-rc.5"],
       "expect": [
         { "pattern": "new migration|db:generate|drizzle-kit generate", "why": "Rollback is a new forward migration." },
         { "pattern": "backup|PITR|point-in-time", "why": "Dropped data comes back only from the provider's backups." }

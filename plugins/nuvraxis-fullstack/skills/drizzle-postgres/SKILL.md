@@ -1,16 +1,16 @@
 ---
 name: drizzle-postgres
 description: >-
-  Drizzle ORM v1 (1.0.0-rc.4) rules for PostgreSQL 17 in Nuvraxis apps — schema files with snakeCase.table, uuid ids, timestamptz columns, pgEnum vs text, indexes and foreign keys, relations v2 with defineRelations, relational queries with object filters vs the select builder, transactions and savepoints, valibot schemas from drizzle-orm/valibot at the edges, the generate/review/commit migration flow, drizzle.config.ts, the node-postgres Pool and PgBouncer. Use when the project has drizzle.config.ts, drizzle-orm or drizzle-kit in package.json, imports from drizzle-orm/pg-core, or a drizzle/ migrations folder.
+  Drizzle ORM v1 (1.0.0-rc.5) rules for PostgreSQL 17 in Nuvraxis apps — schema files with snakeCase.table, uuid ids, timestamptz columns, pgEnum vs text, indexes and foreign keys, relations v2 with defineRelations, relational queries with object filters vs the select builder, transactions and savepoints, valibot schemas from drizzle-orm/valibot at the edges, the generate/review/commit migration flow, drizzle.config.ts, the node-postgres Pool and PgBouncer. Use when the project has drizzle.config.ts, drizzle-orm or drizzle-kit in package.json, imports from drizzle-orm/pg-core, or a drizzle/ migrations folder.
 when_to_use: >-
   "add a table", "add a column", "write a query", "join these", "add a relation", "wrap this in a transaction", "validate before insert", "create a migration", "the migration conflicts", "connection pool", edits under packages/db/src/.
 ---
 
 # Drizzle + PostgreSQL
 
-Use for anything that touches the schema, queries or migrations in `packages/db`. How the package is laid out and what it exports is `db-package`; local Postgres, CI and the Argo CD migration Job are `postgres-ops`. drizzle-kit's own commands, output and errors are covered by the vendored official skills (`drizzle-kit`, `drizzle-kit-generate`, `drizzle-kit-migrations`, `drizzle-kit-hints`, …): read those rather than guessing flags.
+Use for anything that touches the schema, queries or migrations in `packages/db`. How the package is laid out and what it exports is `db-package`; local Postgres, CI and the Argo CD migration Job are `postgres-ops`. drizzle-kit's own commands, output and errors are covered by the vendored official `drizzle-kit` skill and its topic files (`generate.md`, `migrations.md`, `hints.md`, …): read those rather than guessing flags.
 
-Baseline: `drizzle-orm` and `drizzle-kit` **1.0.0-rc.4**, pinned exactly in the workspace catalog (v1 is still a release candidate; `latest` on npm is the 0.x line, whose APIs differ). `pg` 8.23.1. PostgreSQL 17.
+Baseline: `drizzle-orm` and `drizzle-kit` **1.0.0-rc.5**, pinned exactly in the workspace catalog (v1 is still a release candidate; `latest` on npm is the 0.x line, whose APIs differ). `pg` 8.23.1. PostgreSQL 17. Check the version in the app first: one scaffolded on rc.4 behaves differently until it's upgraded ([references/migrations-v1.md](references/migrations-v1.md)).
 
 ## Rules
 
@@ -62,6 +62,7 @@ Baseline: `drizzle-orm` and `drizzle-kit` **1.0.0-rc.4**, pinned exactly in the 
 
 10. **Relational queries (`db.query.*`) for reads that return nested data; the select builder for joins, aggregates and `groupBy`.**
     RQB v2 filters are objects: `findMany({ where: { role: "admin", createdAt: { gte: since } }, with: { posts: { limit: 5 } }, orderBy: { createdAt: "desc" }, limit: 20 })`. Raw fragments inside RQB use the callback form, ``RAW: (t) => sql`lower(${t.email}) = ${email}` ``: referencing the imported table there produces the wrong alias. Details: [references/rqb-v2.md](references/rqb-v2.md).
+    An `undefined` value in `where` throws. For a filter that's optional by design, write `role: input.role ?? EmptyFilter` (from `drizzle-orm/relations`), so a value lost by accident fails instead of widening the query to every row. An empty relation filter (`posts: {}`) is skipped: to ask whether a relation exists, write `posts: true`, and `posts: false` for its absence.
 
 11. **Every write that the caller needs back uses `.returning()`; every list has a `limit`; hot paths select named columns.** `select()` with no column list fetches every column, including the jsonb blob nobody reads. `.findFirst()` adds `limit 1` itself.
 
@@ -78,14 +79,15 @@ Baseline: `drizzle-orm` and `drizzle-kit` **1.0.0-rc.4**, pinned exactly in the 
     - Never edit a committed migration; add a new one. Never delete one.
     - `drizzle-kit push` is for a throwaway local database only: never in CI, never against a shared or production database.
     - `drizzle-kit check` runs in PR CI and fails on migrations that conflict across branches.
-    - Old layouts (`meta/_journal.json`) are converted once with `drizzle-kit up`; the v1 runtime migrator refuses them.
-    - A rename shows up as drop + create unless you answer drizzle-kit's prompt: see the vendored `drizzle-kit-hints` skill.
+    - Old layouts (`meta/_journal.json`) and snapshots from before rc.5 are converted once with `drizzle-kit up`; until then `generate` and `check` stop, and the v1 runtime migrator refuses the old layout. Upgrading an app: [references/migrations-v1.md](references/migrations-v1.md).
+    - A rename shows up as drop + create unless you answer drizzle-kit's prompt: see `hints.md` in the vendored `drizzle-kit` skill.
     Full flow: [references/migrations-v1.md](references/migrations-v1.md).
 
 16. **`drizzle.config.ts`: `dialect: "postgresql"`, `schema`, `out`, `dbCredentials.url` from the environment, `verbose: true`.** It loads the repo root `.env` locally when `DATABASE_URL` isn't set. v1 no longer documents `strict` (push confirms by default), so the template leaves it out. Casing is handled by `snakeCase.table`, not by the config.
 
 17. **One `Pool` per process, sized per pod, created without connecting, kept on `globalThis` in development.**
     `max` 5–10 per pod (replicas × max must stay under the server's or PgBouncer's limit). `src/client.ts` starts with `import "server-only"`. TLS comes from the URL (`sslmode=verify-full&sslrootcert=…`): a URL `sslmode` overrides an `ssl` object passed to the pool, so set it in one place. Behind PgBouncer in transaction mode, don't call `.prepare("name")`: drizzle's node-postgres driver only sends a statement name when you give one.
+    `DrizzleQueryError` leaves query parameters out of its message, so emails and tokens stay out of logs. Keep it that way: don't set `paramsInErrors` outside local debugging. The driver's message in `error.cause` can still quote a value, so log it with the same care as the input itself.
 
 18. **Performance tools:** `.prepare()` (unnamed) for queries run constantly with different parameters; ``db.execute(sql`explain analyze …`)`` to read a plan; `.$dynamic()` to add clauses conditionally; Drizzle Studio (`pnpm db:studio`) against local databases only.
 

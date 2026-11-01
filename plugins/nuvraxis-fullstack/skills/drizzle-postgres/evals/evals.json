@@ -4,7 +4,7 @@
     {
       "id": "add-posts-table",
       "prompt": "Add a posts table: each post has an author (a user), a title, a body, an optional publish date, and timestamps. Users can have many posts.",
-      "project": ["drizzle-orm@1.0.0-rc.4", "drizzle-kit@1.0.0-rc.4", "pg"],
+      "project": ["drizzle-orm@1.0.0-rc.5", "drizzle-kit@1.0.0-rc.5", "pg"],
       "expect": [
         { "pattern": "src/schema/posts\\.ts", "why": "One table per file under src/schema." },
         { "pattern": "snakeCase\\.table\\(\\s*\"posts\"", "why": "snakeCase.table keeps column names written once." },
@@ -23,9 +23,22 @@
       ]
     },
     {
+      "id": "optional-role-filter",
+      "prompt": "Add a listUsers option that filters by role when one is given, and returns everyone otherwise.",
+      "project": ["drizzle-orm@1.0.0-rc.5", "pg"],
+      "expect": [
+        { "pattern": "EmptyFilter", "why": "undefined in where throws since rc.5; an optional filter says so explicitly." },
+        { "pattern": "drizzle-orm/relations", "why": "EmptyFilter is imported from there." },
+        { "pattern": "limit", "why": "Every list has a limit." }
+      ],
+      "reject": [
+        { "pattern": "role:\\s*(input|options|opts|params)?\\.?role\\s*[,}]", "why": "A bare optional value throws when it's undefined." }
+      ]
+    },
+    {
       "id": "author-stats-query",
       "prompt": "Write a query that returns the 10 authors with the most published posts in the last 30 days, with their post count.",
-      "project": ["drizzle-orm@1.0.0-rc.4", "pg"],
+      "project": ["drizzle-orm@1.0.0-rc.5", "pg"],
       "expect": [
         { "pattern": "\\.groupBy\\(", "why": "Aggregates use the select builder, not RQB." },
         { "pattern": "count\\(\\)", "why": "Counting in SQL." },
@@ -42,7 +55,7 @@
     {
       "id": "transfer-credits",
       "prompt": "Add a function that moves credits from one account to another and sends a notification email afterwards.",
-      "project": ["drizzle-orm@1.0.0-rc.4", "pg"],
+      "project": ["drizzle-orm@1.0.0-rc.5", "pg"],
       "expect": [
         { "pattern": "\\.transaction\\(async \\(tx\\)", "why": "Both updates happen in one transaction." },
         { "pattern": "tx\\.(update|select|insert)", "why": "The writes go through tx, not db." },
