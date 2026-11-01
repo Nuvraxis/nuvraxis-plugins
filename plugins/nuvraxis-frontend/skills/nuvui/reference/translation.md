@@ -398,6 +398,95 @@ A model viewer's name is its `label`. The buttons' names, how to use the keys, w
 | `errorKtx2` (required) | `string` |  |  |
 | `errorContextLost` (required) | `string` |  | The browser took the drawing away and hasn't given it back. |
 
+## Scheduler
+
+A calendar's or a timeline's name is the `aria-label` you give it, and an event's is its `title`, its time, its days and its resources. Dates and times are written by the browser in the component's `locale`. The words they write themselves, the buttons, the views and the timeline's scales, the preferences, what the agenda says when nothing is on, the event's popover, the question before an event is deleted, what's said as events are moved, the resources in the side panel, the popover and the timeline's rows, how an event repeats and the question of which of its occurrences a change is for, are in one prop, `labels`:
+
+| Prop | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| `calendar` (required) | `string` |  | The calendar's name, when it's given no `aria-label`. |
+| `today` (required) | `string` |  |  |
+| `previous` (required) | `string` |  |  |
+| `next` (required) | `string` |  |  |
+| `view` (required) | `string` |  | The name of the control that switches views. |
+| `day` (required) | `string` |  |  |
+| `week` (required) | `string` |  |  |
+| `month` (required) | `string` |  |  |
+| `agenda` (required) | `string` |  |  |
+| `timeline` (required) | `string` |  | The timeline's name, when it's given no `aria-label`. |
+| `scale` (required) | `string` |  | The name of the control that switches the timeline's scale. |
+| `scaleName` (required) | `(scale: TimelineScale) => string` |  | A scale of the timeline, in that control. |
+| `unassigned` (required) | `string` |  | The timeline's row for events that belong to no resource. |
+| `allDay` (required) | `string` |  | The row of events that take whole days, and an event's time when it's one of them. |
+| `sidePanel` (required) | `string` |  | The button that opens the side panel, and the panel's name. |
+| `preferences` (required) | `string` |  |  |
+| `twentyFourHours` (required) | `string` |  |  |
+| `showWeekends` (required) | `string` |  |  |
+| `showWeekNumbers` (required) | `string` |  |  |
+| `showEmptyDays` (required) | `string` |  |  |
+| `weekStartsOn` (required) | `string` |  |  |
+| `weekNumber` (required) | `(week: number) => string` |  | A week's number, in the month view. |
+| `more` (required) | `(count: number) => string` |  | The button in a full day that shows the rest of its events. |
+| `timeRange` (required) | `(start: string, end: string) => string` |  | An event's time, from start to end. |
+| `nothingBetween` (required) | `(from: string, to: string) => string` |  | The agenda when nothing is on in the days it shows. |
+| `nextEvent` (required) | `(day: string) => string` |  | The button in an empty agenda that goes to the next day with an event. |
+| `nothingAhead` (required) | `string` |  | The agenda when nothing is on for 180 days. |
+| `newEvent` (required) | `string` |  | The heading of the popover for an event being made. |
+| `untitled` (required) | `string` |  | An event saved with no title. |
+| `eventTitle` (required) | `string` |  | The fields of the event's popover. |
+| `starts` (required) | `string` |  |  |
+| `ends` (required) | `string` |  |  |
+| `date` (required) | `string` |  |  |
+| `time` (required) | `string` |  |  |
+| `color` (required) | `string` |  |  |
+| `colorName` (required) | `(color: number) => string` |  | One of the eight colors, in the popover. |
+| `description` (required) | `string` |  |  |
+| `save` (required) | `string` |  |  |
+| `cancel` (required) | `string` |  |  |
+| `close` (required) | `string` |  |  |
+| `edit` (required) | `string` |  |  |
+| `delete` (required) | `string` |  |  |
+| `endsBeforeStart` (required) | `string` |  | Said when the end chosen is before the start. |
+| `deleteQuestion` (required) | `(title: string) => string` |  | The question before an event is deleted. |
+| `deleteWarning` (required) | `string` |  |  |
+| `eventActions` (required) | `(title: string) => string` |  | The toolbar a tap on an event shows on a touch screen. |
+| `pickedUp` (required) | `(title: string, when: string) => string` |  | Said when an event is picked up from the keyboard. |
+| `movedTo` (required) | `(when: string) => string` |  | Said as a picked-up event is moved, with its new time. |
+| `dropped` (required) | `(title: string, when: string) => string` |  |  |
+| `putBack` (required) | `(title: string) => string` |  |  |
+| `added` (required) | `(title: string, when: string) => string` |  | Said when an event is added by dropping something on the calendar. |
+| `deleted` (required) | `(title: string) => string` |  |  |
+| `resources` (required) | `string` |  | The list of resources in the side panel, and the popover's field for several. |
+| `resource` (required) | `string` |  | The popover's field for one resource. |
+| `noResource` (required) | `string` |  | The choice of no resource, in the popover. |
+| `searchResources` (required) | `string` |  | The search field in the popover's list of resources. |
+| `noResourceFound` (required) | `string` |  | The popover's list of resources when the search finds none. |
+| `resourceCount` (required) | `(count: number) => string` |  | How many resources are chosen, in the popover. |
+| `resourceRequired` (required) | `string` |  | Said when an event that needs a resource has none. |
+| `resourcesIn` (required) | `(title: string) => string` |  | The button that opens and closes the resources inside one. |
+| `repeat` (required) | `string` |  | The popover's field for how an event repeats. |
+| `doesNotRepeat` (required) | `string` |  | The choice of not repeating, in that field. |
+| `frequency` (required) | `(frequency: Frequency) => string` |  | How often it repeats, as a choice in that field. |
+| `every` (required) | `string` |  | The field for every how many days, weeks, months or years. |
+| `intervalUnit` (required) | `(frequency: Frequency, count: number) => string` |  | What follows the number in that field. |
+| `repeatOn` (required) | `string` |  | The days of the week it's on, or the day of the month, in the popover. |
+| `repeatOption` (required) | `(day: RecurrenceDay) => string` |  | A choice of the day of the month or year it's on. |
+| `repeatEnds` (required) | `string` |  | The popover's field for when it stops repeating. |
+| `never` (required) | `string` |  |  |
+| `onDate` (required) | `string` |  |  |
+| `afterCount` (required) | `string` |  |  |
+| `lastDate` (required) | `string` |  | The last day it can be on, in the popover. |
+| `count` (required) | `string` |  | How many times it happens, in the popover. |
+| `repeatsIn` (required) | `(timeZone: string) => string` |  | Said in the popover of an event in a time zone other than the one shown. |
+| `recurrence` (required) | `(details: RecurrenceDetails) => string` |  | How an event repeats, in words. |
+| `repeats` (required) | `string` |  | Added to the name of an event that repeats. |
+| `changeQuestion` (required) | `(title: string) => string` |  | The question when one of a repeating event's occurrences is changed. |
+| `whichChange` (required) | `string` |  | Under the question, before the choice of which to change. |
+| `whichDelete` (required) | `string` |  | Under the question to delete one that repeats, before the choice. |
+| `thisEvent` (required) | `string` |  |  |
+| `followingEvents` (required) | `string` |  |  |
+| `allEvents` (required) | `string` |  |  |
+
 ## What isn't text
 
 - A [field](components/field.md) marks a required label with `*`, which `FieldLabel` changes with `requiredIndicator`. Screen readers don't hear it. They hear "required" from the control, in the browser's own language.
