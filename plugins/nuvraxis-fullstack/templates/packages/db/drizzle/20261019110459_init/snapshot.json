@@ -1,28 +1,111 @@
 {
-  "version": "8",
+  "type": "base",
+  "version": "9",
   "dialect": "postgres",
   "id": "e39a6cef-2b26-4086-aa19-7f0b1956947d",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "user_role"
+      ],
+      "writes": [
+        "s|enum|public.user_role",
+        "n|enum|public.user_role",
+        "e|enum|public.user_role",
+        "n|type|public.user_role"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "users"
+      ],
+      "writes": [
+        "s|tbl|public.users",
+        "n|tbl|public.users",
+        "e|tbl|public.users",
+        "n|rel|public.users",
+        "n|type|public.users",
+        "n|rel|public.users_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.user_role"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "users",
+        "users_email_key"
+      ],
+      "writes": [
+        "s|idx|public.users_email_key",
+        "n|idx|public.users_email_key",
+        "e|idx|public.users_email_key",
+        "n|rel|public.users_email_key"
+      ],
+      "reads": [
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|col|public.users.email"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "users",
+        "users_created_at_idx"
+      ],
+      "writes": [
+        "s|idx|public.users_created_at_idx",
+        "n|idx|public.users_created_at_idx",
+        "e|idx|public.users_created_at_idx",
+        "n|rel|public.users_created_at_idx"
+      ],
+      "reads": [
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|col|public.users.created_at"
+      ]
+    }
+  ],
   "ddl": [
     {
+      "schema": "public",
+      "name": "users",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "user_role",
       "values": [
         "admin",
         "member",
         "viewer"
       ],
-      "name": "user_role",
-      "entityType": "enums",
-      "schema": "public"
+      "entityType": "enums"
     },
     {
-      "isRlsEnabled": false,
-      "name": "users",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
+      "schema": "public",
+      "table": "users",
+      "name": "id",
       "type": "uuid",
       "typeSchema": null,
       "notNull": true,
@@ -30,25 +113,12 @@
       "default": "gen_random_uuid()",
       "generated": null,
       "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "users",
       "name": "email",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -56,12 +126,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "users",
+      "name": "name",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "users",
+      "name": "role",
       "type": "user_role",
       "typeSchema": "public",
       "notNull": true,
@@ -69,25 +152,12 @@
       "default": "'member'",
       "generated": null,
       "identity": null,
-      "name": "role",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
+      "entityType": "columns"
     },
     {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
+      "schema": "public",
+      "table": "users",
       "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
-    },
-    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -95,12 +165,25 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
+      "entityType": "columns"
     },
     {
+      "schema": "public",
+      "table": "users",
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "users",
+      "name": "users_email_key",
       "nameExplicit": true,
       "columns": [
         {
@@ -116,12 +199,12 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "users_email_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "users"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "users",
+      "name": "users_created_at_idx",
       "nameExplicit": true,
       "columns": [
         {
@@ -137,21 +220,17 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "users_created_at_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "users"
+      "entityType": "indexes"
     },
     {
+      "schema": "public",
+      "table": "users",
+      "name": "users_pkey",
       "columns": [
         "id"
       ],
       "nameExplicit": false,
-      "name": "users_pkey",
-      "schema": "public",
-      "table": "users",
       "entityType": "pks"
     }
-  ],
-  "renames": []
+  ]
 }
