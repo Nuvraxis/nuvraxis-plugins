@@ -1,19 +1,10 @@
----
-name: drizzle-hints
-description: Resolve `missing_hints` responses from drizzle-kit `generate` or `push` — covers rename-vs-create disambiguation, `confirm_data_loss` approvals, and the `Hint` reply array shape for the retry. Load whenever drizzle-kit output shows `missing_hints` status, prompts to confirm a rename or destructive change, or the next step is constructing a `hints` array for a retry call.
-metadata:
-  version: "1.0.0"
----
-
 # Drizzle hints
-
-If the `drizzle` skill has not been loaded yet this session, load it first — it carries the staleness check and the MCP-vs-CLI surface-selection rule that govern every drizzle-kit invocation.
 
 `status: 'missing_hints'` means the diff is ambiguous (a rename could also be a drop + create) or unsafe (would drop a non-empty entity, or would recreate a SQLite table and wipe its rows). Until hints are supplied the operation cannot proceed — the CLI exits `2`, the SDK returns the envelope without writing or applying anything.
 
-Under `--output text` + non-TTY the same unresolved decisions surface as the human-readable missing-decisions report on stdout (also exit code 2) rather than this envelope — the `drizzle-output-modes` skill covers the text-report shape.
+Under `--output text` + non-TTY the same unresolved decisions surface as the human-readable missing-decisions report on stdout (also exit code 2) rather than this envelope — see [output-modes.md](output-modes.md) for the text-report shape.
 
-Resolution is one round trip: read each item in `unresolved`, build one reply `Hint` per item, re-invoke the same command with the array. Both the missing-hints request shape and the reply shape are typed and validated by the runtime — wrong arity, wrong spelling, or wrong reply discriminator returns `status: 'error'` with `error.code: 'invalid_hints'`. See the `drizzle-responses-and-errors` skill for that branch.
+Resolution is one round trip: read each item in `unresolved`, build one reply `Hint` per item, re-invoke the same command with the array. Both the missing-hints request shape and the reply shape are typed and validated by the runtime — wrong arity, wrong spelling, or wrong reply discriminator returns `status: 'error'` with `error.code: 'invalid_hints'`. See [responses-and-errors.md](responses-and-errors.md) for that branch.
 
 ## Reply types
 
@@ -54,7 +45,6 @@ The `kind` literal in the reply must match the literal in the unresolved item ex
 | `unique` | `[schema, table, name]` | all |
 | `primary_key` | `[schema, table, name]` | all |
 | `foreign key` | `[schema, table, name]` | all |
-| `privilege` | `[grantor, grantee, schema, table, type]` | postgresql, cockroach |
 
 The runtime only emits unresolved items for kinds that exist on the target dialect, so the dialect-availability column is informational — an agent that just echoes whatever shows up in `unresolved` never sees a kind that doesn't apply. For `rename`, both `from` and `to` are entity tuples of the same arity (the `from` is a deleted entity of the same kind that the new one is being matched against). For `create`, only `entity` is set.
 
@@ -79,7 +69,7 @@ The unresolved item for a `confirm_data_loss` carries a `reason` (and, for `type
 
 | reason | applicable kinds | meaning | reason_details |
 |--------|------------------|---------|----------------|
-| `non_empty` | `table`, `column`, `schema`, `view`, `primary_key` | Target entity has ≥1 row; drop will lose data | — |
+| `non_empty` | `table`, `column`, `schema`, `view`, `primary_key` | Target entity has ≥1 row (a `column`: ≥1 non-null value); drop will lose data | — |
 | `table_recreate` | `add_not_null` (sqlite / turso only) | Adding the `NOT NULL` column has no in-place path on SQLite, so confirming wipes all rows and recreates the table | — |
 | `type_change` | `column` | Existing column SQL type changes (e.g. mysql / singlestore `ALTER COLUMN`) | `{ from: string, to: string }` |
 
@@ -165,16 +155,6 @@ The `table_recreate` reason fires because SQLite has no in-place way to add a `N
 ```
 
 Re-invoke with this array via `--hints-file ./hints.json` (CLI) or `hints: [...]` (SDK). The successful retry returns `status: 'ok'` (with `migration_path` for `generate`, or just `dialect` for `push`).
-
-### Privilege 5-tuple rename
-
-`privilege` is the only kind whose entity tuple has five slots: `[grantor, grantee, schema, table, type]`. Renaming the underlying table renames each privilege grant against it:
-
-```json
-{ "type": "rename", "kind": "privilege",
-  "from": ["app_owner", "analytics_role", "public", "orders", "SELECT"],
-  "to":   ["app_owner", "analytics_role", "public", "orders_v2", "SELECT"] }
-```
 
 ## Schema-namespace placeholder
 

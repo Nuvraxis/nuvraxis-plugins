@@ -1,6 +1,6 @@
 # Migrations with drizzle-kit v1
 
-The commands themselves, their JSON output and rename prompts are in the vendored official skills (`drizzle-kit-migrations`, `drizzle-kit-generate`, `drizzle-kit-hints`, `drizzle-kit-responses-and-errors`). This page is how we use them.
+The commands themselves, their JSON output and rename prompts are in the vendored official `drizzle-kit` skill (`migrations.md`, `generate.md`, `hints.md`, `responses-and-errors.md`). This page is how we use them.
 
 ## Layout
 
@@ -8,10 +8,10 @@ The commands themselves, their JSON output and rename prompts are in the vendore
 packages/db/drizzle/
 └─ 20261019110459_init/
    ├─ migration.sql     # what the runner applies, statements split on --> statement-breakpoint
-   └─ snapshot.json     # the schema after this migration; drizzle-kit diffs against it
+   └─ snapshot.json     # the full schema in the first folder, the change after that
 ```
 
-v1 removed `meta/_journal.json`. Each folder's snapshot records the ids of the snapshots before it, which is how `check` and `generate` spot two branches that both added a migration on top of the same parent.
+v1 removed `meta/_journal.json`. Since rc.5 snapshots are incremental: the first folder's is a `base` snapshot with the whole schema, and each later one is a small `diff`. Each records the ids of the snapshots before it and what its statements touch, which is how `check` and `generate` tell whether two branches that both added a migration on the same parent conflict.
 
 ## The flow
 
@@ -31,6 +31,17 @@ v1 removed `meta/_journal.json`. Each folder's snapshot records the ids of the s
 - **Conflicts:** when `check` reports non-commutative migrations, rebase onto `main`, delete your branch's uncommitted migration folder, and `generate` again so it sits on top.
 - **Old layout:** a repo with `meta/_journal.json` runs `drizzle-kit up` once; the v1 runtime migrator throws on the old layout.
 - **Custom SQL** (data backfills, `CONCURRENTLY` indexes): `drizzle-kit generate --custom --name <what>` creates an empty migration to fill in. Keep data changes idempotent.
+
+## Upgrading an app from rc.4 to rc.5
+
+An app scaffolded before rc.5 keeps working on rc.4 until you move it. To move it:
+
+1. Set `drizzle-orm` and `drizzle-kit` to `1.0.0-rc.5` in the `pnpm-workspace.yaml` catalog, then `pnpm install`.
+2. `pnpm --filter @repo/db exec drizzle-kit up`, once. It rewrites each `snapshot.json` to the new format and leaves every `migration.sql` and migration id alone. Until then, `db:generate` and `db:check` stop with "please run drizzle-kit up".
+3. `pnpm db:check`, then `pnpm db:generate`, which must print "No schema changes". Commit the rewritten snapshots.
+4. Fix what the type checker and tests find, then search `packages/db` for: optional values in `where` (they now throw), `{}` relation filters that meant "has any" (now `true`), raw SQL that names a relation's alias, and code that read parameters from `DrizzleQueryError`. The full list is in the [release notes](https://github.com/drizzle-team/drizzle-orm/releases/tag/v1.0.0-rc.5).
+
+Databases need nothing. The runner reads the same `drizzle.__drizzle_migrations` table, so a database migrated with rc.4 reports "database is up to date" under rc.5, and only new migrations apply.
 
 ## The runtime migrator
 

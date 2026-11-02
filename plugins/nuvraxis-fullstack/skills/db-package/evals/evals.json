@@ -4,7 +4,7 @@
     {
       "id": "list-admins-in-app",
       "prompt": "On the admin page, show the list of admin users.",
-      "project": ["next", "@repo/db", "drizzle-orm@1.0.0-rc.4"],
+      "project": ["next", "@repo/db", "drizzle-orm@1.0.0-rc.5"],
       "expect": [
         { "pattern": "packages/db/src/queries/users\\.ts", "why": "The query lives in the db package's query file." },
         { "pattern": "\\(db: Executor", "why": "The query function takes the executor first." },
@@ -35,7 +35,7 @@
     {
       "id": "fix-isolated-declarations",
       "prompt": "Our base tsconfig has isolatedDeclarations but packages/db turns it off. Make packages/db consistent with the rest.",
-      "project": ["typescript@7", "drizzle-orm@1.0.0-rc.4"],
+      "project": ["typescript@7", "drizzle-orm@1.0.0-rc.5"],
       "ask": "Explain that it's a deliberate exception (inferred table/relation/schema types) and confirm before changing anything.",
       "expect": [
         { "pattern": "inferred|can't be written by hand|exception", "why": "The reason for the exception is given." }

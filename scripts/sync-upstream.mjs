@@ -35,7 +35,7 @@ const NPM_SOURCES = [
 		path: "skills",
 		// The one place the drizzle-kit version is written down.
 		versionFrom: "plugins/nuvraxis-fullstack/templates/pnpm-catalog.yaml",
-		// drizzle → drizzle-kit, drizzle-generate → drizzle-kit-generate, …
+		// drizzle → drizzle-kit
 		folderName: (skill) => skill.replace(/^drizzle/, "drizzle-kit"),
 	},
 ];
@@ -129,7 +129,7 @@ Regenerate it with \`pnpm sync\` from the repository root. CI runs \`pnpm sync -
 function pinnedVersion(source) {
 	const text = readFileSync(join(ROOT, source.versionFrom), "utf8");
 	const escaped = source.package.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
-	// `  drizzle-kit: 1.0.0-rc.4` on one line; a bare `drizzle-kit:` map key (permissions) doesn't count.
+	// `  drizzle-kit: 1.0.0-rc.5` on one line; a bare `drizzle-kit:` map key (permissions) doesn't count.
 	const match = new RegExp(`^[ \\t]+"?${escaped}"?:[ \\t]*([^\\s#]+)`, "m").exec(text);
 	if (!match) throw new Error(`${source.versionFrom} doesn't pin ${source.package}`);
 	return match[1];
@@ -178,6 +178,7 @@ function readUpstream() {
 }
 
 async function runSync() {
+	const previous = readUpstream();
 	const skills = {};
 	for (const source of GIT_SOURCES) {
 		const fetched = fetchGit(source, "HEAD");
@@ -200,6 +201,13 @@ async function runSync() {
 				const folder = source.folderName(skill);
 				vendor(join(fetched.folder, skill), join(pluginSkills(source.plugin), folder), npmNote(source, version, skill));
 				folders[skill] = folder;
+			}
+			// A skill the new version no longer ships mustn't stay behind in the plugin.
+			for (const folder of Object.values(previous.packages?.[source.package]?.skills ?? {})) {
+				if (!Object.values(folders).includes(folder)) {
+					rmSync(join(pluginSkills(source.plugin), folder), { recursive: true, force: true });
+					console.log(`✓ removed ${folder}: ${source.package}@${version} no longer ships it`);
+				}
 			}
 			packages[source.package] = {
 				plugin: source.plugin,

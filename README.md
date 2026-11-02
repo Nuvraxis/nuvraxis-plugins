@@ -7,7 +7,7 @@ With them installed, one command creates a complete, working repository: a Next.
 | Plugin | What it gives you |
 |---|---|
 | **`nuvraxis-frontend`** | The app: TypeScript 7, Next.js 16 App Router, nuvui, Biome, SCSS + BEM, pnpm 12 + Turborepo, Docker, Helm, GitHub Actions, Argo CD. 12 skills, the nuvui MCP server, and a hook that formats every file Claude edits. |
-| **`nuvraxis-fullstack`** | The database: Drizzle ORM v1 and PostgreSQL 17 in a `packages/db` package, valibot validation, local Postgres with Docker Compose, a CI job against a real Postgres, and migrations run by Argo CD before each rollout. 12 skills. Builds on `nuvraxis-frontend`, so install both. |
+| **`nuvraxis-fullstack`** | The database: Drizzle ORM v1 and PostgreSQL 17 in a `packages/db` package, valibot validation, local Postgres with Docker Compose, a CI job against a real Postgres, and migrations run by Argo CD before each rollout. 5 skills. Builds on `nuvraxis-frontend`, so install both. |
 
 ## Contents
 
@@ -121,7 +121,7 @@ You don't call the skills yourself. Ask for what you want in plain words, and Cl
 | "Add an invoices page with a table of open invoices" | `nextjs-production`, `nuvui`, `scss-bem` |
 | "Cache this and refresh it when an invoice is paid" | `nextjs-production` |
 | "Protect this action so only admins can run it" | `nextjs-security` |
-| "Add a `due_date` column and a migration" | `drizzle-postgres`, `drizzle-kit-generate` |
+| "Add a `due_date` column and a migration" | `drizzle-postgres`, `drizzle-kit` |
 | "Where should this query go? How do I test it?" | `db-package` |
 | "Add a CI check" / "The release failed" | `github-actions` |
 | "Expose it on a domain" / "Add autoscaling" | `helm-nextjs` |
@@ -165,7 +165,7 @@ MCP server: `nuvui` at `https://nuvui.nuvraxis.com/mcp` (rules, component pages,
 | `drizzle-postgres` | Schema with `snakeCase.table`, uuid ids, timestamptz, relations v2, relational queries vs the select builder, transactions, `drizzle-orm/valibot`, the migration flow, the pool and PgBouncer |
 | `db-package` | What `packages/db` exports and never exports, query functions that work inside transactions, PGlite tests, scripts |
 | `postgres-ops` | Local Compose, the production database and its Secret, the Argo CD migrate Job, CI, forward-only rollback, backups |
-| `drizzle-kit`, `drizzle-kit-generate`, `drizzle-kit-migrations`, `drizzle-kit-hints`, `drizzle-kit-push`, `drizzle-kit-pull`, `drizzle-kit-output-modes`, `drizzle-kit-responses-and-errors` | The official skills shipped inside `drizzle-kit@1.0.0-rc.4`, the same version generated apps install |
+| `drizzle-kit` | The official skill shipped inside `drizzle-kit@1.0.0-rc.5`, the same version generated apps install: generate, migrations, hints, push, pull, output modes, and responses and errors |
 
 No MCP server in this plugin. Generated apps list the official drizzle-kit MCP server in `.mcp.json` but switch it off in `.claude/settings.json`: it can `push` and `pull` against whatever `DATABASE_URL` points at, so turn it on only against a local database.
 

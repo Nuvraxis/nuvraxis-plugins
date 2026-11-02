@@ -18,20 +18,13 @@
 	"packages": {
 		"drizzle-kit": {
 			"plugin": "nuvraxis-fullstack",
-			"version": "1.0.0-rc.4",
-			"integrity": "sha512-KZCpjRyu+oYHLj/UJogfFlOkWhHVkaEI2EOT1U3NDVXUzLoTyPjqwFxwOrlQxsY6jzRyxcz4EacqboGfhEeYrA==",
-			"tarball": "https://registry.npmjs.org/drizzle-kit/-/drizzle-kit-1.0.0-rc.4.tgz",
+			"version": "1.0.0-rc.5",
+			"integrity": "sha512-8glQN7iFK3e1aOIoRit1NtslcsqE/rnlqNw/1jUC5Ph4RFVh/E5Jricxd6Nu2ugj2HlFZlZ6O4006AwqJ9e24g==",
+			"tarball": "https://registry.npmjs.org/drizzle-kit/-/drizzle-kit-1.0.0-rc.5.tgz",
 			"path": "skills",
 			"versionFrom": "plugins/nuvraxis-fullstack/templates/pnpm-catalog.yaml",
 			"skills": {
-				"drizzle": "drizzle-kit",
-				"drizzle-generate": "drizzle-kit-generate",
-				"drizzle-hints": "drizzle-kit-hints",
-				"drizzle-migrations": "drizzle-kit-migrations",
-				"drizzle-output-modes": "drizzle-kit-output-modes",
-				"drizzle-pull": "drizzle-kit-pull",
-				"drizzle-push": "drizzle-kit-push",
-				"drizzle-responses-and-errors": "drizzle-kit-responses-and-errors"
+				"drizzle": "drizzle-kit"
 			}
 		}
 	}
