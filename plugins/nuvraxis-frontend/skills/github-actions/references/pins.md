@@ -2,19 +2,19 @@
 
 Every `uses:` in the template workflows (and in the plugin repo's own `validate.yml`) is pinned to a full commit SHA, with the release it came from as a trailing comment. Dependabot (`.github/dependabot.yml`, `github-actions` ecosystem, weekly, one grouped PR) bumps the SHA and the comment together.
 
-Pins in use, resolved **2026-10-18**:
+Pins in use, resolved **2026-11-21**:
 
 | Action | Release | Commit SHA |
 |---|---|---|
 | `actions/checkout` | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
 | `actions/setup-node` | v7.1.0 | `949feb2413d6458794dcd2491c4babbbce0c15c1` |
-| `pnpm/action-setup` | v6.1.0 | `ea17c68df8912ef543352723c149a84f56e3d413` |
+| `pnpm/action-setup` | v6.1.1 | `73e46992e05b19abd31f2f3c20e0e7370d762115` |
 | `docker/setup-qemu-action` | v4.4.0 | `99012661954931238ded8c8b007157a8430204e1` |
 | `docker/setup-buildx-action` | v4.4.1 | `f87e5991a6d7451dcb8d9637bfbc97413f497069` |
-| `docker/login-action` | v4.6.0 | `dbcb813823bdd20940b903addbd779551569679f` |
+| `docker/login-action` | v4.8.0 | `8aa5831fb8d48d8f76594c7ddde61ae58019f550` |
 | `docker/metadata-action` | v6.2.0 | `dc802804100637a589fabce1cb79ff13a1411302` |
 | `docker/build-push-action` | v7.4.0 | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` |
-| `azure/setup-helm` | v5.0.1 | `9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310` |
+| `azure/setup-helm` | v5.1.0 | `2f5e7bc67f1f9972ab16657bb795f36d8f04de0e` |
 
 Format:
 

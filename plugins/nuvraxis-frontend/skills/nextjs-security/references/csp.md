@@ -22,7 +22,7 @@ frame-ancestors 'none'
 | Directive | Why |
 |---|---|
 | `script-src 'nonce-…' 'strict-dynamic'` | Next stamps the nonce on its scripts; `strict-dynamic` lets those load their chunks. No host allowlists to maintain. |
-| `style-src 'self' 'nonce-…'` | The app's and nuvui's stylesheets, plus nuvui `ScrollArea`'s one `<style>` element, which takes the nonce. |
+| `style-src 'self' 'nonce-…'` | The app's and nuvui's stylesheets, plus the `<style>` elements nuvui writes at run time, which take the nonce: `ScrollArea`'s, and CodeMirror's for `CodeEditor` and `DiffEditor` (`@nuvui/editor/code`). Pass each `nonce={nonce}`, or their styles are blocked and the editor draws unstyled. |
 | `style-src-attr 'unsafe-inline'` | nuvui (and Radix, Recharts) set `style` attributes during server rendering: progress width, slider position, chart colors. Without it they're dropped. A `style` attribute can't select other elements, so it can't exfiltrate page content. |
 | `img-src blob: data:` | `blob:` for nuvui previews and QR/barcode PNG export; `data:` for small inline images and `next/image` blur placeholders. |
 | `worker-src blob:` | `@nuvui/map` starts MapLibre's worker from a blob, and so does hls.js for `@nuvui/media` streams. Drop it if the app has neither. |
@@ -111,7 +111,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 // A fresh nonce per request, sent as the Content-Security-Policy. Next reads the nonce from
 // the request's CSP header and puts it on its own scripts; the root layout reads x-nonce for
-// anything else that needs it (nuvui's ScrollArea, next/script).
+// anything else that needs it (nuvui's ScrollArea and code editors, next/script).
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
@@ -119,7 +119,8 @@ export function proxy(request: NextRequest) {
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    // nuvui: ScrollArea's one <style> element takes the nonce; components set style attributes.
+    // nuvui: ScrollArea's and the code editors' <style> elements take the nonce;
+    // components set style attributes.
     `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
     "style-src-attr 'unsafe-inline'",
     "img-src 'self' blob: data:",

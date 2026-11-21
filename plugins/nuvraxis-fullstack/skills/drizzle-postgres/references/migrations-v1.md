@@ -17,7 +17,7 @@ v1 removed `meta/_journal.json`. Since rc.5 snapshots are incremental: the first
 
 1. Change the schema in `src/schema/`.
 2. `TZ=UTC pnpm db:generate` (or `--name <what>` via `pnpm --filter @repo/db exec drizzle-kit generate --name add_posts`). drizzle-kit names the folder from the current time in the machine's zone; UTC keeps names ordered across a team.
-3. **Read `migration.sql`.** Look for drops you didn't intend (a rename without a hint is drop + create), `NOT NULL` added to a table with rows (needs a default or a backfill), and new indexes on big tables (consider `CREATE INDEX CONCURRENTLY` in a hand-written migration).
+3. **Read `migration.sql`.** Look for drops you didn't intend (a rename without a hint is drop + create), `NOT NULL` added to a table with rows (needs a default or a backfill), and new indexes on big tables (see "Indexes on big tables" below).
 4. Commit the folder with the schema change, in the same PR.
 5. CI (`pr.yaml`, `db` job): `drizzle-kit check`, then the bundled `dist/migrate.mjs` twice against Postgres 17, then tests.
 6. After merge and release, Argo CD's PreSync Job applies it before the new pods start (see `postgres-ops`).
@@ -30,7 +30,8 @@ v1 removed `meta/_journal.json`. Since rc.5 snapshots are incremental: the first
 - **`push` only for a throwaway local database** (prototyping a schema before generating). It writes no migration, so nothing reaches CI or production.
 - **Conflicts:** when `check` reports non-commutative migrations, rebase onto `main`, delete your branch's uncommitted migration folder, and `generate` again so it sits on top.
 - **Old layout:** a repo with `meta/_journal.json` runs `drizzle-kit up` once; the v1 runtime migrator throws on the old layout.
-- **Custom SQL** (data backfills, `CONCURRENTLY` indexes): `drizzle-kit generate --custom --name <what>` creates an empty migration to fill in. Keep data changes idempotent.
+- **Custom SQL** (data backfills): `drizzle-kit generate --custom --name <what>` creates an empty migration to fill in. Keep data changes idempotent.
+- **Indexes on big tables:** `CREATE INDEX` locks writes to the table until it finishes, and the runner applies migrations inside a transaction, where Postgres refuses `CREATE INDEX CONCURRENTLY`. So never put `CONCURRENTLY` in a migration: it fails the deploy. For a table big enough that the lock matters, build the index by hand first, `CREATE INDEX CONCURRENTLY IF NOT EXISTS posts_author_id_idx ON posts (author_id);` against each database, then merge the migration drizzle-kit generated for it, edited to `CREATE INDEX IF NOT EXISTS`, so it finds the index already there and does nothing. A concurrent build that fails leaves an invalid index: drop it and build it again before deploying.
 
 ## Upgrading an app from rc.4 to rc.5
 
