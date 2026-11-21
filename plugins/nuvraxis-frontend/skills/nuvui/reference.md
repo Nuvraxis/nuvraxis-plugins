@@ -165,8 +165,10 @@ A file for each page of the docs. Read the one for a component before using it: 
 
 ## @nuvui/editor
 
-- [Editor](reference/editor/index.md): The @nuvui/editor package. A rich text editor on Tiptap, installed next to @nuvui/react, with a toolbar, a menu on the selection, links, a character count, and HTML as its value.
+- [Editor](reference/editor/index.md): The @nuvui/editor package. A rich text editor on Tiptap, and a code editor and a diff editor on CodeMirror, installed next to @nuvui/react.
 - [RichTextEditor](reference/editor/rich-text-editor.md): A box to write formatted text in. Bold and italic, headings, lists, quotes, code and links, from a toolbar, from the keyboard, or from a small menu over selected text. Its value is HTML.
+- [CodeEditor](reference/editor/code-editor.md): A box to write code in, on CodeMirror. Colored as CodeBlock colors code, with line numbers, folding, search, completion and problems marked in the code, and a file's own history when it's one of a set.
+- [DiffEditor](reference/editor/diff-editor.md): Two texts and what changed between them, side by side or in one column, on CodeMirror. Unchanged lines are folded away, and each change can be kept or undone.
 
 ## @nuvui/emoji
 
@@ -218,6 +220,7 @@ A file for each page of the docs. Read the one for a component before using it: 
 - [Editing events](reference/scheduler/editing.md): Making, changing, moving and deleting events in an EventCalendar, with a pointer, a finger or the keyboard.
 - [Resources](reference/scheduler/resources.md): Rooms, people or machines that events are booked against in an EventCalendar, shown or hidden from its side panel, and read from your own field names.
 - [Recurring events](reference/scheduler/recurring-events.md): Events in an EventCalendar that repeat by a rule, an RRULE or an object, with days left out, worked out in their own time zone, and changed one at a time, from one on, or all together.
+- [Loading from a server](reference/scheduler/loading-by-range.md): An EventCalendar or EventTimeline that asks your server only for the days shown, keeps what it has loaded, and saves each change, drawn at once and taken back if the save fails.
 
 ## @nuvui/icons
 
