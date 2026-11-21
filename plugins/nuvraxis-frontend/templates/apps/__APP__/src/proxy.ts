@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 // A fresh nonce per request, sent as the Content-Security-Policy. Next reads the nonce from
 // the request's CSP header and puts it on its own scripts; the root layout reads x-nonce for
-// anything else that needs it (nuvui's ScrollArea, next/script).
+// anything else that needs it (nuvui's ScrollArea and code editors, next/script).
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
@@ -10,7 +10,8 @@ export function proxy(request: NextRequest) {
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    // nuvui: ScrollArea's one <style> element takes the nonce; components set style attributes.
+    // nuvui: ScrollArea's and the code editors' <style> elements take the nonce;
+    // components set style attributes.
     `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
     "style-src-attr 'unsafe-inline'",
     "img-src 'self' blob: data:",
