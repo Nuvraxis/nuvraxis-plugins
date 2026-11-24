@@ -49,6 +49,7 @@ In development the proxy adds `'unsafe-eval'` to `script-src` (React's dev tooli
 | `@nuvui/3d` with KTX2 textures | don't: the transcoder needs `'unsafe-eval'`, which we never allow in production. Re-export with Meshopt |
 | `@nuvui/backgrounds`, `@nuvui/flow` | nothing |
 | `@nuvui/scheduler` | nothing new, but keep `style-src-attr 'unsafe-inline'`: each event's place, size and color are `style` attributes. Without it, a server-rendered calendar stacks its events at the top of the day, uncolored, until they're next drawn |
+| `@nuvui/org-chart` | keep `style-src-attr 'unsafe-inline'`: each card's place and size are a `style` attribute, and without it a server-rendered chart piles its cards in one corner. People's photos (`avatar`) from another origin need that host in `img-src` |
 | A third-party script | load it with `next/script` and `nonce={nonce}`; `strict-dynamic` covers what it loads |
 | Embedding in your own other app | `frame-ancestors https://admin.example.com` |
 
