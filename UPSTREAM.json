@@ -4,8 +4,8 @@
 			"plugin": "nuvraxis-frontend",
 			"repo": "Nuvraxis/nuvui",
 			"path": "skills/nuvui",
-			"commit": "dbda440cb9553cc9a36a22fd3291c8b0e2435a1a",
-			"date": "2026-11-23T19:05:30+01:00"
+			"commit": "fe8b42778eaa45102a3292d9abe025593411efb7",
+			"date": "2026-11-25T05:57:39+01:00"
 		},
 		"turborepo": {
 			"plugin": "nuvraxis-frontend",
